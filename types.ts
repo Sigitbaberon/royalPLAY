@@ -145,6 +145,7 @@ export interface AdminSettings {
           enabled: boolean;
           botToken: string;
           chatId: string;
+          botUsername: string;
       }
   };
   promoCodes: PromoCode[];
@@ -185,7 +186,7 @@ export interface DataContextType {
     updatePromoCode: (id: string, updates: Partial<PromoCode>) => void;
     deletePromoCode: (id: string) => void;
     validatePromoCode: (code: string, type: TransactionType, gameId: string) => { isValid: boolean; promo?: PromoCode; message: string; discountPercent?: number };
-    // FIX: Added getUserVipStatus and getAffiliateStats to DataContextType
     getUserVipStatus: (gameId: string) => VipStatus | null;
     getAffiliateStats: (gameId: string) => AffiliateStats | null;
+    testTelegramNotification: (telegramSettings: AdminSettings['notifications']['telegram']) => void;
 }

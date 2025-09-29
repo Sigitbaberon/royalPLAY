@@ -69,7 +69,7 @@ const defaultSettings: AdminSettings = {
     announcement: "Selamat Datang di Raxnet Store!",
     enabledFeatures: { sellChip: true, buyChip: true, globalHistory: true, providerCarousel: true, },
     notifications: {
-        telegram: { enabled: false, botToken: "", chatId: "" }
+        telegram: { enabled: false, botToken: "", chatId: "", botUsername: "" }
     },
     promoCodes: [],
     partners: defaultPartners,
@@ -427,8 +427,36 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
     }, [transactions, settings.affiliateSystem]);
 
+    const testTelegramNotification = useCallback(async (telegramSettings: AdminSettings['notifications']['telegram']) => {
+        const { botToken, chatId } = telegramSettings;
+        if (!botToken || !chatId) {
+            showToast("Harap isi Token Bot dan Chat ID.", "error");
+            return;
+        }
+
+        const message = "✅ *Koneksi Bot Telegram Berhasil!*\n\nNotifikasi dari Raxnet Store akan muncul di sini.";
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' }),
+            });
+            const data = await response.json();
+            if (data.ok) {
+                showToast("Pesan tes berhasil dikirim! Periksa Telegram Anda.", "success");
+            } else {
+                throw new Error(data.description || 'Respons tidak valid dari API Telegram');
+            }
+        } catch (error: any) {
+            console.error("Gagal mengirim notifikasi tes Telegram:", error);
+            showToast(`Gagal mengirim pesan: ${error.message}`, "error");
+        }
+    }, [showToast]);
+
     return (
-        <DataContext.Provider value={{ transactions, settings, toasts, addTransaction, updateTransactionStatus, updateSettings, updatePin, showToast, removeToast, promoCodes, addPromoCode, updatePromoCode, deletePromoCode, validatePromoCode, chatLogs, sendChatMessage, sendAdminChatMessage, getUserVipStatus, getAffiliateStats }}>
+        <DataContext.Provider value={{ transactions, settings, toasts, addTransaction, updateTransactionStatus, updateSettings, updatePin, showToast, removeToast, promoCodes, addPromoCode, updatePromoCode, deletePromoCode, validatePromoCode, chatLogs, sendChatMessage, sendAdminChatMessage, getUserVipStatus, getAffiliateStats, testTelegramNotification }}>
             {children}
         </DataContext.Provider>
     );

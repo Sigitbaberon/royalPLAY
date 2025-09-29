@@ -29,8 +29,9 @@ const SettingsPanel: React.FC<{
     onAddPromoCode: (codeData: Omit<PromoCode, 'id' | 'currentUses' | 'createdAt' | 'isActive'>) => void;
     onUpdatePromoCode: (id: string, updates: Partial<PromoCode>) => void;
     onDeletePromoCode: (id: string) => void;
+    onTestTelegram: (settings: AdminSettings['notifications']['telegram']) => void;
 }> = (props) => {
-    const { localSettings, onSettingsChange, onSave, onPinChange, onPinReset, onAddPromoCode, onUpdatePromoCode, onDeletePromoCode } = props;
+    const { localSettings, onSettingsChange, onSave, onPinChange, onPinReset, onAddPromoCode, onUpdatePromoCode, onDeletePromoCode, onTestTelegram } = props;
     const { showToast } = useData();
     const [newPin, setNewPin] = useState("");
     const [confirmPin, setConfirmPin] = useState("");
@@ -165,9 +166,22 @@ const SettingsPanel: React.FC<{
                  </div>
             </Accordion>
             
-            <Accordion title="Notifikasi" icon={<BellIcon className="w-5 h-5"/>}>
-                <div className="flex items-center gap-3 mb-6"><input type="checkbox" checked={localSettings.notifications.telegram.enabled} onChange={e => handleGenericChange('notifications.telegram.enabled', e.target.checked)} className="h-5 w-5 rounded" /><label className="text-sm font-semibold text-slate-200">Aktifkan Notifikasi Telegram</label></div>
-                {localSettings.notifications.telegram.enabled && <div className="space-y-4 animate-fade-in pl-8"><div><label className="block text-sm text-slate-400 mb-1">Token Bot Telegram</label><input type="password" value={localSettings.notifications.telegram.botToken} onChange={e => handleGenericChange('notifications.telegram.botToken', e.target.value)} className="input-field" /></div><div><label className="block text-sm text-slate-400 mb-1">Chat ID</label><input type="text" value={localSettings.notifications.telegram.chatId} onChange={e => handleGenericChange('notifications.telegram.chatId', e.target.value)} className="input-field" /></div></div>}
+            <Accordion title="Integrasi Telegram" icon={<BellIcon className="w-5 h-5"/>}>
+                <div className="flex items-center gap-3 mb-6"><input type="checkbox" checked={localSettings.notifications.telegram.enabled} onChange={e => handleGenericChange('notifications.telegram.enabled', e.target.checked)} className="h-5 w-5 rounded" /><label className="text-sm font-semibold text-slate-200">Aktifkan Notifikasi & Bot Telegram</label></div>
+                {localSettings.notifications.telegram.enabled && (
+                    <div className="space-y-6 animate-fade-in pl-8">
+                        <p className="text-xs text-slate-400 bg-black/20 p-3 rounded-lg">
+                            Dapatkan kredensial dari <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-purple-400 underline">BotFather</a> di Telegram.
+                            Untuk 'Chat ID', kirim pesan ke bot Anda dan kunjungi <code>https://api.telegram.org/botTOKEN/getUpdates</code> untuk menemukan ID Anda.
+                        </p>
+                        <div><label className="block text-sm text-slate-400 mb-1">Token Bot Telegram</label><input type="password" value={localSettings.notifications.telegram.botToken} onChange={e => handleGenericChange('notifications.telegram.botToken', e.target.value)} className="input-field" placeholder="Contoh: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11" /></div>
+                        <div><label className="block text-sm text-slate-400 mb-1">Chat ID Admin</label><input type="text" value={localSettings.notifications.telegram.chatId} onChange={e => handleGenericChange('notifications.telegram.chatId', e.target.value)} className="input-field" placeholder="ID unik untuk menerima notifikasi" /></div>
+                        <div><label className="block text-sm text-slate-400 mb-1">Username Bot</label><input type="text" value={localSettings.notifications.telegram.botUsername} onChange={e => handleGenericChange('notifications.telegram.botUsername', e.target.value)} className="input-field" placeholder="Contoh: RaxnetStoreBot (tanpa @)" /></div>
+                        <button onClick={() => onTestTelegram(localSettings.notifications.telegram)} className="w-full btn-secondary mt-2">
+                            Kirim Notifikasi Tes
+                        </button>
+                    </div>
+                )}
             </Accordion>
             
             <Accordion title="Fitur Aplikasi" icon={<PowerIcon className="w-5 h-5"/>}>
@@ -561,7 +575,7 @@ const SummaryCard: React.FC<{icon: React.ReactNode, title: string, value: number
 
 
 const AdminPanel: React.FC = () => {
-    const { transactions, settings, updateSettings, updatePin, showToast, addPromoCode, updatePromoCode, deletePromoCode } = useData();
+    const { transactions, settings, updateSettings, updatePin, showToast, addPromoCode, updatePromoCode, deletePromoCode, testTelegramNotification } = useData();
     const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
     const [localSettings, setLocalSettings] = useState<AdminSettings>(settings);
 
@@ -659,6 +673,7 @@ const AdminPanel: React.FC = () => {
                     onAddPromoCode={handleAddPromoCode}
                     onUpdatePromoCode={handleUpdatePromoCode}
                     onDeletePromoCode={handleDeletePromoCode}
+                    onTestTelegram={testTelegramNotification}
                 />;
             default:
                 return null;

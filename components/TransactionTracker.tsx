@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useData } from '../context/DataContext';
 import { Transaction, TransactionStatus } from '../types';
@@ -54,7 +55,7 @@ const TransactionDetails: React.FC<{tx: Transaction}> = ({ tx }) => {
 
 
 const TransactionTracker: React.FC<TransactionTrackerProps> = ({ initialTransactionId, onBackToForm }) => {
-    const { transactions, showToast } = useData();
+    const { transactions, showToast, settings } = useData();
     const [trackingCode, setTrackingCode] = useState(initialTransactionId || '');
     const [foundTransaction, setFoundTransaction] = useState<Transaction | null>(null);
 
@@ -75,6 +76,10 @@ const TransactionTracker: React.FC<TransactionTrackerProps> = ({ initialTransact
 
 
     const statusIndex = foundTransaction ? [TransactionStatus.PENDING, TransactionStatus.VERIFYING, TransactionStatus.PAID].indexOf(foundTransaction.status) : -1;
+    const isTelegramEnabled = settings.notifications.telegram.enabled && settings.notifications.telegram.botUsername;
+    const telegramLink = foundTransaction && isTelegramEnabled
+        ? `https://t.me/${settings.notifications.telegram.botUsername}?start=${foundTransaction.id}`
+        : '#';
 
     return (
         <div className="glass-pane p-8 rounded-2xl max-w-lg mx-auto animate-fade-in-up">
@@ -103,7 +108,15 @@ const TransactionTracker: React.FC<TransactionTrackerProps> = ({ initialTransact
             
             {foundTransaction && (
                 <div className="mt-8 p-6 bg-black/30 rounded-lg border border-purple-500/20 animate-fade-in-up">
-                    <h3 className="font-bold text-lg mb-6">Detail Transaksi: <span className="font-mono">{foundTransaction.id}</span> <span className={`ml-2 text-xs font-bold px-2 py-1 rounded-full ${foundTransaction.type === 'SELL' ? 'bg-purple-500/20 text-purple-300' : 'bg-green-500/20 text-green-300'}`}>{foundTransaction.type === 'SELL' ? 'JUAL' : 'BELI'}</span></h3>
+                    <div className="flex justify-between items-start mb-6">
+                        <h3 className="font-bold text-lg">Detail Transaksi: <span className="font-mono">{foundTransaction.id}</span> <span className={`ml-2 text-xs font-bold px-2 py-1 rounded-full ${foundTransaction.type === 'SELL' ? 'bg-purple-500/20 text-purple-300' : 'bg-green-500/20 text-green-300'}`}>{foundTransaction.type === 'SELL' ? 'JUAL' : 'BELI'}</span></h3>
+                        {isTelegramEnabled && (
+                            <a href={telegramLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-xs font-semibold rounded-lg transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M9.315 7.584C8.448 7.923 7.5 8.583 7.5 9.75c0 1.167.948 1.827 1.815 2.166.425.162.833.376 1.185.648.352.271.5.621.5.986 0 .63-.728 1.125-1.685 1.125-.957 0-1.685-.495-1.685-1.125a.75.75 0 0 0-1.5 0c0 .995 1.023 2.625 3.185 2.625 2.162 0 3.185-1.63 3.185-2.625 0-1.167-.948-1.827-1.815-2.166-.425-.162-.833-.376-1.185-.648-.352-.272-.5-.622-.5-.986 0-.63.728-1.125 1.685-1.125.957 0 1.685.495 1.685 1.125a.75.75 0 1 0 1.5 0c0-.995-1.023-2.625-3.185-2.625C10.338 4.875 9.315 6.51 9.315 7.584ZM12 2.25A9.75 9.75 0 1 0 21.75 12 9.75 9.75 0 0 0 12 2.25Z" /></svg>
+                                Lacak via Telegram
+                            </a>
+                        )}
+                    </div>
                     <div className="flex flex-col sm:flex-row">
                         <div className="sm:w-2/5 mb-6 sm:mb-0">
                              <TimelineStep icon={<ClockIcon className="h-5 w-5"/>} title="Tertunda" active={statusIndex === 0} done={statusIndex >= 0} timestamp={foundTransaction.createdAt} />
