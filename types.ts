@@ -141,12 +141,15 @@ export interface AdminSettings {
       providerCarousel: boolean;
   };
   notifications: {
-      telegram: {
+      adminBot: {
           enabled: boolean;
           botToken: string;
           chatId: string;
+      };
+      userBot: {
+          enabled: boolean;
           botUsername: string;
-      }
+      };
   };
   promoCodes: PromoCode[];
   partners: Partner[];
@@ -188,5 +191,5 @@ export interface DataContextType {
     validatePromoCode: (code: string, type: TransactionType, gameId: string) => { isValid: boolean; promo?: PromoCode; message: string; discountPercent?: number };
     getUserVipStatus: (gameId: string) => VipStatus | null;
     getAffiliateStats: (gameId: string) => AffiliateStats | null;
-    testTelegramNotification: (telegramSettings: AdminSettings['notifications']['telegram']) => void;
+    testTelegramNotification: (telegramSettings: AdminSettings['notifications']['adminBot']) => void;
 }

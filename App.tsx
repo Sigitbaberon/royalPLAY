@@ -9,6 +9,7 @@ import AdminPinModal from './components/AdminPinModal';
 import ChatWidget from './components/ChatWidget';
 import VipModal from './components/VipModal';
 import AffiliateModal from './components/AffiliateModal';
+import { TransactionStatus } from './types';
 
 type View = 'user' | 'admin';
 
@@ -102,13 +103,37 @@ const AppContent: React.FC = () => {
     const [isPinModalOpen, setPinModalOpen] = useState(false);
     const [isVipModalOpen, setVipModalOpen] = useState(false);
     const [isAffiliateModalOpen, setAffiliateModalOpen] = useState(false);
-    const { settings } = useData();
+    const { settings, updateTransactionStatus, showToast } = useData();
 
     const { appName, appLogoSvg } = settings.branding;
 
     useEffect(() => {
         document.title = `${appName} | Platform Jual Beli Chip #1`;
     }, [appName]);
+
+    // This effect handles transaction updates from Telegram links.
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const txId = urlParams.get('tx_id');
+        const newStatus = urlParams.get('new_status') as TransactionStatus;
+        const adminSecret = urlParams.get('admin_secret');
+
+        if (txId && newStatus && adminSecret) {
+            // Immediately clear the params from URL to prevent re-triggering on refresh
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            if (adminSecret === settings.adminPin) {
+                if (Object.values(TransactionStatus).includes(newStatus)) {
+                    updateTransactionStatus(txId, newStatus);
+                    showToast(`Transaksi ${txId} berhasil diupdate ke status "${newStatus}".`, 'success');
+                } else {
+                    showToast(`Status "${newStatus}" tidak valid.`, 'error');
+                }
+            } else {
+                showToast('Kunci rahasia admin tidak valid. Aksi dibatalkan.', 'error');
+            }
+        }
+    }, [settings.adminPin, updateTransactionStatus, showToast]);
 
     const switchToAdmin = useCallback(() => setPinModalOpen(true), []);
     const handlePinSuccess = useCallback(() => {

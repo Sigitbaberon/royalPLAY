@@ -76,9 +76,9 @@ const TransactionTracker: React.FC<TransactionTrackerProps> = ({ initialTransact
 
 
     const statusIndex = foundTransaction ? [TransactionStatus.PENDING, TransactionStatus.VERIFYING, TransactionStatus.PAID].indexOf(foundTransaction.status) : -1;
-    const isTelegramEnabled = settings.notifications.telegram.enabled && settings.notifications.telegram.botUsername;
+    const isTelegramEnabled = settings.notifications.userBot.enabled && settings.notifications.userBot.botUsername;
     const telegramLink = foundTransaction && isTelegramEnabled
-        ? `https://t.me/${settings.notifications.telegram.botUsername}?start=${foundTransaction.id}`
+        ? `https://t.me/${settings.notifications.userBot.botUsername}?start=${foundTransaction.id}`
         : '#';
 
     return (

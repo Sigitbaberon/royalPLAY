@@ -2,16 +2,56 @@
 import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { Transaction, AdminSettings, TransactionStatus, DataContextType, ToastMessage, ToastType, PaymentMethod, AddTransactionData, TransactionType, PromoCode, Partner, ChatMessage, VipTier, VipStatus, AffiliateStats, AffiliateCommission } from '../types';
-import { CHIP_UNIT, INDONESIAN_BANKS, INDONESIAN_EWALLETS, anonymizeId, CHIP_PACKAGES, DEFAULT_ADMIN_PIN } from '../constants';
+import { CHIP_UNIT, INDONESIAN_BANKS, INDONESIAN_EWALLETS, anonymizeId, CHIP_PACKAGES, DEFAULT_ADMIN_PIN, formatChipAmount } from '../constants';
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 // Helper function for Telegram notifications
-const sendTelegramNotification = async (settings: AdminSettings, message: string) => {
-    const { enabled, botToken, chatId } = settings.notifications.telegram;
+const sendTelegramNotification = async (settings: AdminSettings, transaction: Transaction) => {
+    const { enabled, botToken, chatId } = settings.notifications.adminBot;
     if (!enabled || !botToken || !chatId) {
         return;
     }
+
+    const appUrl = window.location.origin + window.location.pathname;
+    const adminSecret = settings.adminPin;
+
+    const keyboard = {
+        inline_keyboard: [
+            [
+                { text: '✅ Verifikasi', url: `${appUrl}?tx_id=${transaction.id}&new_status=${TransactionStatus.VERIFYING}&admin_secret=${adminSecret}` },
+                { text: '💰 Bayar/Kirim', url: `${appUrl}?tx_id=${transaction.id}&new_status=${TransactionStatus.PAID}&admin_secret=${adminSecret}` },
+                { text: '❌ Tolak', url: `${appUrl}?tx_id=${transaction.id}&new_status=${TransactionStatus.REJECTED}&admin_secret=${adminSecret}` }
+            ]
+        ]
+    };
+
+    const transactionType = transaction.type === 'SELL' ? 'Penjualan' : 'Pembelian';
+    let details = '';
+    if (transaction.type === 'SELL' && transaction.paymentDetails) {
+        details = `*Pembayaran Ke:* ${transaction.paymentDetails.provider} - ${transaction.paymentDetails.accountNumber} a/n ${transaction.paymentDetails.accountName}`;
+    } else if (transaction.type === 'BUY' && transaction.chipPackage) {
+        details = `*Paket:* ${transaction.chipPackage.name}`;
+    }
+    
+    const promoCode = transaction.promoCodeUsed ? settings.promoCodes.find(p => p.id === transaction.promoCodeUsed)?.code : null;
+
+
+    const message = `
+*🔔 Transaksi Baru Masuk!*
+
+*ID Transaksi:* \`${transaction.id}\`
+*Tipe:* ${transactionType}
+*ID User:* \`${transaction.destinationId}\`
+*Jumlah Chip:* ${formatChipAmount(transaction.chipAmount)}
+*Nilai Rupiah:* *Rp ${new Intl.NumberFormat('id-ID').format(transaction.moneyValue)}*
+${promoCode ? `*Kode Promo:* \`${promoCode}\`` : ''}
+
+${details}
+
+*Pilih aksi cepat di bawah ini:*
+    `.trim();
+
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     try {
@@ -22,6 +62,7 @@ const sendTelegramNotification = async (settings: AdminSettings, message: string
                 chat_id: chatId,
                 text: message,
                 parse_mode: 'Markdown',
+                reply_markup: keyboard,
             }),
         });
     } catch (error) {
@@ -69,7 +110,8 @@ const defaultSettings: AdminSettings = {
     announcement: "Selamat Datang di Raxnet Store!",
     enabledFeatures: { sellChip: true, buyChip: true, globalHistory: true, providerCarousel: true, },
     notifications: {
-        telegram: { enabled: false, botToken: "", chatId: "", botUsername: "" }
+        adminBot: { enabled: false, botToken: "", chatId: "" },
+        userBot: { enabled: false, botUsername: "" }
     },
     promoCodes: [],
     partners: defaultPartners,
@@ -207,8 +249,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 adminPaymentInfo: { ...prev.adminPaymentInfo, ...(newSettings.adminPaymentInfo || {}), paymentMethods: { ...prev.adminPaymentInfo.paymentMethods, ...(newSettings.adminPaymentInfo?.paymentMethods || {}) } },
                 enabledFeatures: { ...prev.enabledFeatures, ...(newSettings.enabledFeatures || {}), },
                 notifications: {
-                    ...prev.notifications,
-                    telegram: { ...prev.notifications.telegram, ...(newSettings.notifications?.telegram || {}) }
+                    adminBot: { ...prev.notifications.adminBot, ...(newSettings.notifications?.adminBot || {}) },
+                    userBot: { ...prev.notifications.userBot, ...(newSettings.notifications?.userBot || {}) },
                 },
                 promoCodes: newSettings.promoCodes || prev.promoCodes,
                 partners: newSettings.partners || prev.partners,
@@ -283,12 +325,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const id = `RP-${Date.now().toString(36).substr(2, 9)}`.toUpperCase();
         let finalTxData = { ...txData.data };
 
-        const promoCode = finalTxData.promoCodeUsed;
-        const promo = promoCode ? settings.promoCodes.find(p => p.code.toLowerCase() === promoCode.toLowerCase()) : undefined;
+        const promoCodeStr = finalTxData.promoCodeUsed;
+        const promo = promoCodeStr ? settings.promoCodes.find(p => p.code.toLowerCase() === promoCodeStr.toLowerCase()) : undefined;
 
         if (promo) {
             updatePromoCode(promo.id, { currentUses: promo.currentUses + 1 });
-            finalTxData.promoCodeUsed = promo.id; // Store ID
+            finalTxData.promoCodeUsed = promo.id; // Store ID, not code
         }
         
         // FIX: Capture referral ID from URL
@@ -307,8 +349,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         setTransactions(prev => [newTransaction, ...prev]);
         
-        const notifMessage = `*Transaksi Baru Masuk!*\n*ID:* \`${newTransaction.id}\`\n*Tipe:* ${newTransaction.type}\n*Jumlah:* ${new Intl.NumberFormat('id-ID').format(newTransaction.moneyValue)} IDR\n*User ID:* \`${newTransaction.destinationId}\`\n${promoCode ? `*Promo:* \`${promoCode}\`` : ''}\n_Harap segera diproses._`;
-        await sendTelegramNotification(settings, notifMessage);
+        await sendTelegramNotification(settings, newTransaction);
 
         return newTransaction.id;
     }, [settings, setTransactions, updatePromoCode]);
@@ -427,7 +468,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
     }, [transactions, settings.affiliateSystem]);
 
-    const testTelegramNotification = useCallback(async (telegramSettings: AdminSettings['notifications']['telegram']) => {
+    const testTelegramNotification = useCallback(async (telegramSettings: AdminSettings['notifications']['adminBot']) => {
         const { botToken, chatId } = telegramSettings;
         if (!botToken || !chatId) {
             showToast("Harap isi Token Bot dan Chat ID.", "error");
