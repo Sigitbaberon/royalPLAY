@@ -1,10 +1,31 @@
-
 import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { Transaction, AdminSettings, TransactionStatus, DataContextType, ToastMessage, ToastType, PaymentMethod, AddTransactionData, TransactionType, PromoCode, Partner, ChatMessage, VipTier, VipStatus, AffiliateStats, AffiliateCommission } from '../types';
 import { CHIP_UNIT, INDONESIAN_BANKS, INDONESIAN_EWALLETS, anonymizeId, CHIP_PACKAGES, DEFAULT_ADMIN_PIN, formatChipAmount } from '../constants';
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
+
+// Helper function to convert data URL to Blob for Telegram upload
+const dataURLtoBlob = (dataurl: string): Blob | null => {
+    const arr = dataurl.split(',');
+    if (arr.length < 2) return null;
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    if (!mimeMatch || mimeMatch.length < 2) return null;
+    const mime = mimeMatch[1];
+    try {
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type: mime });
+    } catch (e) {
+        console.error("Error decoding base64 string for Telegram:", e);
+        return null;
+    }
+};
+
 
 // Helper function for Telegram notifications
 const sendTelegramNotification = async (settings: AdminSettings, transaction: Transaction) => {
@@ -52,7 +73,35 @@ ${details}
 *Pilih aksi cepat di bawah ini:*
     `.trim();
 
+    // Try to send proof image as a photo with caption
+    if (transaction.proofImage) {
+        const blob = dataURLtoBlob(transaction.proofImage);
+        if (blob) {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', blob, 'proof-image.png');
+            formData.append('caption', message);
+            formData.append('parse_mode', 'Markdown');
+            formData.append('reply_markup', JSON.stringify(keyboard));
 
+            const url = `https://api.telegram.org/bot${botToken}/sendPhoto`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const responseData = await response.json();
+                if (responseData.ok) {
+                    return; // Successfully sent photo, so we're done.
+                }
+                console.error("Telegram API error (sendPhoto):", responseData.description);
+            } catch (error) {
+                console.error("Failed to send Telegram photo notification:", error);
+            }
+        }
+    }
+
+    // Fallback to sending a text message if no image or if photo sending failed
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     try {
         await fetch(url, {
@@ -66,7 +115,7 @@ ${details}
             }),
         });
     } catch (error) {
-        console.error("Failed to send Telegram notification:", error);
+        console.error("Failed to send Telegram text notification:", error);
     }
 };
 
@@ -110,8 +159,8 @@ const defaultSettings: AdminSettings = {
     announcement: "Selamat Datang di Raxnet Store!",
     enabledFeatures: { sellChip: true, buyChip: true, globalHistory: true, providerCarousel: true, },
     notifications: {
-        adminBot: { enabled: false, botToken: "", chatId: "" },
-        userBot: { enabled: false, botUsername: "" }
+        adminBot: { enabled: true, botToken: "7543069089:AAHaGID56F99-ovQqMYdeGHF6LKfJr7wF9g", chatId: "7910050681" },
+        userBot: { enabled: true, botUsername: "configinjek_bot" }
     },
     promoCodes: [],
     partners: defaultPartners,
