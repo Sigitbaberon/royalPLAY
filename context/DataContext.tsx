@@ -134,11 +134,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
     const [settings, setSettings] = useLocalStorage<AdminSettings>('settings', defaultSettings);
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
-    
-    // For user's current session
-    const [chatHistory, setChatHistory] = useLocalStorage<ChatMessage[]>('raxnet-chat-session', []);
-    // For admin to see all messages
-    const [allChatMessages, setAllChatMessages] = useLocalStorage<ChatMessage[]>('raxnet-chat-log', []);
+    const [chatLogs, setChatLogs] = useLocalStorage<{ [gameId: string]: ChatMessage[] }>('raxnet-chat-logs', {});
 
 
     useEffect(() => {
@@ -317,29 +313,47 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return newTransaction.id;
     }, [settings, setTransactions, updatePromoCode]);
 
-    const sendChatMessage = useCallback((message: string) => {
+    const sendChatMessage = useCallback((gameId: string, message: string) => {
         const userMessage: ChatMessage = {
-            id: `msg-${Date.now()}`,
+            id: `msg-user-${Date.now()}`,
             sender: 'user',
             text: message,
             timestamp: Date.now(),
         };
         
-        // Add to user's view and admin's log
-        setChatHistory(prev => [...prev, userMessage]);
-        setAllChatMessages(prev => [...prev, userMessage].sort((a,b) => b.timestamp - a.timestamp));
+        setChatLogs(prev => {
+            const userLog = prev[gameId] || [];
+            return { ...prev, [gameId]: [...userLog, userMessage] };
+        });
 
-        // Simulate agent response
+        // Simulate agent auto-response
         setTimeout(() => {
             const agentResponse: ChatMessage = {
-                id: `msg-agent-${Date.now()}`,
+                id: `msg-agent-auto-${Date.now()}`,
                 sender: 'agent',
                 text: "Terima kasih atas pesan Anda. Tim support kami akan segera merespons jika diperlukan. Harap dicatat, ini adalah respons otomatis.",
                 timestamp: Date.now(),
             };
-            setChatHistory(prev => [...prev, agentResponse]);
+            setChatLogs(prev => {
+                const userLog = prev[gameId] || [];
+                return { ...prev, [gameId]: [...userLog, agentResponse] };
+            });
         }, 1500);
-    }, [setChatHistory, setAllChatMessages]);
+    }, [setChatLogs]);
+
+    const sendAdminChatMessage = useCallback((gameId: string, message: string) => {
+        const adminMessage: ChatMessage = {
+            id: `msg-agent-manual-${Date.now()}`,
+            sender: 'agent',
+            text: message,
+            timestamp: Date.now(),
+        };
+        
+        setChatLogs(prev => {
+            const userLog = prev[gameId] || [];
+            return { ...prev, [gameId]: [...userLog, adminMessage] };
+        });
+    }, [setChatLogs]);
 
     // FIX: Implemented getUserVipStatus function
     const getUserVipStatus = useCallback((gameId: string): VipStatus | null => {
@@ -414,7 +428,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [transactions, settings.affiliateSystem]);
 
     return (
-        <DataContext.Provider value={{ transactions, settings, toasts, addTransaction, updateTransactionStatus, updateSettings, updatePin, showToast, removeToast, promoCodes, addPromoCode, updatePromoCode, deletePromoCode, validatePromoCode, chatHistory, allChatMessages, sendChatMessage, getUserVipStatus, getAffiliateStats }}>
+        <DataContext.Provider value={{ transactions, settings, toasts, addTransaction, updateTransactionStatus, updateSettings, updatePin, showToast, removeToast, promoCodes, addPromoCode, updatePromoCode, deletePromoCode, validatePromoCode, chatLogs, sendChatMessage, sendAdminChatMessage, getUserVipStatus, getAffiliateStats }}>
             {children}
         </DataContext.Provider>
     );

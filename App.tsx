@@ -3,10 +3,12 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { DataProvider, useData } from './context/DataContext';
 import AdminPanel from './components/AdminPanel';
 import UserView from './components/UserView';
-import { LockClosedIcon, UserIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
+import { LockClosedIcon, UserIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon, SparklesIcon, ShareIcon } from '@heroicons/react/24/solid';
 import ToastContainer from './components/ToastContainer';
 import AdminPinModal from './components/AdminPinModal';
 import ChatWidget from './components/ChatWidget';
+import VipModal from './components/VipModal';
+import AffiliateModal from './components/AffiliateModal';
 
 type View = 'user' | 'admin';
 
@@ -98,6 +100,8 @@ const MaintenanceView: React.FC = () => (
 const AppContent: React.FC = () => {
     const [view, setView] = useState<View>('user');
     const [isPinModalOpen, setPinModalOpen] = useState(false);
+    const [isVipModalOpen, setVipModalOpen] = useState(false);
+    const [isAffiliateModalOpen, setAffiliateModalOpen] = useState(false);
     const { settings } = useData();
 
     const { appName, appLogoSvg } = settings.branding;
@@ -173,9 +177,22 @@ const AppContent: React.FC = () => {
                             </button>
                         )}
                     </div>
-                    <div className="flex items-center gap-4">
-                        {/* VIP, Affiliate, and Speaker buttons removed */}
-                    </div>
+                    {view === 'user' && (
+                        <div className="flex items-center gap-2">
+                             {settings.vipSystem.enabled && (
+                                <button onClick={() => setVipModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg text-sm font-semibold transition-all text-amber-300 hover:text-white">
+                                    <SparklesIcon className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Program VIP</span>
+                                </button>
+                            )}
+                             {settings.affiliateSystem.enabled && (
+                                <button onClick={() => setAffiliateModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-sm font-semibold transition-all text-green-300 hover:text-white">
+                                    <ShareIcon className="h-4 w-4" />
+                                    <span className="hidden sm:inline">Afiliasi</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </nav>
                  <LiveRateTicker announcement={settings.announcement} />
             </header>
@@ -190,12 +207,17 @@ const AppContent: React.FC = () => {
                 <p>&copy; {new Date().getFullYear()} {appName}. Platform Jual Beli Chip Premium.</p>
                 <p className="mt-1">Semua transaksi dienkripsi dan diproses dengan aman. Layanan 24/7.</p>
             </footer>
+
+            {/* Modals & Widgets */}
             <ToastContainer />
             <AdminPinModal 
                 isOpen={isPinModalOpen}
                 onClose={() => setPinModalOpen(false)}
                 onSuccess={handlePinSuccess}
             />
+             <VipModal isOpen={isVipModalOpen} onClose={() => setVipModalOpen(false)} />
+             <AffiliateModal isOpen={isAffiliateModalOpen} onClose={() => setAffiliateModalOpen(false)} />
+
             {view === 'user' && settings.chatSettings.enabled && <ChatWidget />}
         </div>
     );

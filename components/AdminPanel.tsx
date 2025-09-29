@@ -1,9 +1,9 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useData } from '../context/DataContext';
-import { AdminSettings, Transaction, TransactionStatus, TransactionType, PromoCode, Partner } from '../types';
+import { AdminSettings, Transaction, TransactionStatus, TransactionType, PromoCode, Partner, ChatMessage } from '../types';
 import { formatChipAmount, DEFAULT_ADMIN_PIN } from '../constants';
-import { Cog6ToothIcon, ArrowPathIcon, CheckCircleIcon, XCircleIcon, ClockIcon, BanknotesIcon, ShoppingCartIcon, WalletIcon, BuildingLibraryIcon, ChartBarIcon, PowerIcon, CurrencyDollarIcon, CalendarDaysIcon, ShieldCheckIcon, StarIcon, BellIcon, PaintBrushIcon, KeyIcon, ArrowDownOnSquareIcon, TrashIcon, TicketIcon, PencilIcon, UserGroupIcon, ChatBubbleLeftRightIcon, PaperClipIcon, ShareIcon, TrophyIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/solid';
+import { Cog6ToothIcon, ArrowPathIcon, CheckCircleIcon, XCircleIcon, ClockIcon, BanknotesIcon, ShoppingCartIcon, WalletIcon, BuildingLibraryIcon, ChartBarIcon, PowerIcon, CurrencyDollarIcon, CalendarDaysIcon, ShieldCheckIcon, StarIcon, BellIcon, PaintBrushIcon, KeyIcon, ArrowDownOnSquareIcon, TrashIcon, TicketIcon, PencilIcon, UserGroupIcon, ChatBubbleLeftRightIcon, PaperClipIcon, ShareIcon, TrophyIcon, ClipboardDocumentCheckIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
 
 type AdminTab = 'dashboard' | 'transactions' | 'chat' | 'settings';
 
@@ -312,22 +312,98 @@ const TransactionPanel: React.FC = () => {
 }
 
 const ChatPanel: React.FC = () => {
-    const { allChatMessages } = useData();
+    const { chatLogs, sendAdminChatMessage } = useData();
+    const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+    const [reply, setReply] = useState("");
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const chatSessions = useMemo(() => {
+        return Object.entries(chatLogs)
+            .map(([gameId, messages]) => ({
+                gameId,
+                lastMessage: messages[messages.length - 1]
+            }))
+            .sort((a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp);
+    }, [chatLogs]);
+
+    useEffect(() => {
+        if (!selectedGameId && chatSessions.length > 0) {
+            setSelectedGameId(chatSessions[0].gameId);
+        }
+    }, [chatSessions, selectedGameId]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [chatLogs, selectedGameId]);
+
+    const handleReply = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (reply.trim() && selectedGameId) {
+            sendAdminChatMessage(selectedGameId, reply.trim());
+            setReply("");
+        }
+    };
+    
+    const MessageBubble: React.FC<{ msg: ChatMessage }> = ({ msg }) => {
+        const isAgent = msg.sender === 'agent';
+        return (
+            <div className={`flex ${isAgent ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-xs md:max-w-sm rounded-2xl px-4 py-2.5 ${isAgent ? 'bg-purple-600 text-white rounded-br-lg' : 'bg-slate-700 text-slate-200 rounded-bl-lg'}`}>
+                    <p className="text-sm">{msg.text}</p>
+                </div>
+            </div>
+        );
+    };
 
     return (
-        <div className="glass-pane p-6 rounded-2xl">
-            <h2 className="text-2xl font-bold mb-4 text-purple-300">Log Live Chat</h2>
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-                {allChatMessages.map(msg => (
-                    <div key={msg.id} className="p-4 bg-black/20 rounded-lg">
-                        <p className="text-sm text-white">{msg.text}</p>
-                        <p className="text-xs text-slate-500 mt-2 text-right">
-                            {new Date(msg.timestamp).toLocaleString('id-ID')}
-                        </p>
+        <div className="glass-pane rounded-2xl flex h-[75vh]">
+            <div className="w-1/3 border-r border-purple-500/10 flex flex-col">
+                <h2 className="text-xl font-bold p-4 border-b border-purple-500/10 text-purple-300">Sesi Chat</h2>
+                <div className="flex-1 overflow-y-auto">
+                    {chatSessions.map(({ gameId, lastMessage }) => (
+                        <button 
+                            key={gameId} 
+                            onClick={() => setSelectedGameId(gameId)}
+                            className={`w-full text-left p-4 border-b border-slate-800 transition-colors ${selectedGameId === gameId ? 'bg-purple-500/10' : 'hover:bg-purple-500/5'}`}
+                        >
+                            <p className="font-bold text-white truncate">{gameId}</p>
+                            <p className="text-xs text-slate-400 truncate mt-1">{lastMessage.text}</p>
+                        </button>
+                    ))}
+                    {chatSessions.length === 0 && <p className="text-center text-sm text-slate-500 p-4">Belum ada sesi chat.</p>}
+                </div>
+            </div>
+            <div className="w-2/3 flex flex-col">
+                {selectedGameId && chatLogs[selectedGameId] ? (
+                    <>
+                        <div className="p-4 border-b border-purple-500/10">
+                            <h3 className="font-bold text-lg text-white">Percakapan dengan: <span className="font-mono text-amber-300">{selectedGameId}</span></h3>
+                        </div>
+                        <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+                            {chatLogs[selectedGameId].map(msg => <MessageBubble key={msg.id} msg={msg} />)}
+                            <div ref={messagesEndRef} />
+                        </div>
+                        <form onSubmit={handleReply} className="p-3 bg-black/30 border-t border-purple-500/20">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    value={reply}
+                                    onChange={(e) => setReply(e.target.value)}
+                                    placeholder="Ketik balasan..."
+                                    className="flex-1 bg-slate-900/50 border border-slate-700 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                                />
+                                <button type="submit" className="p-3 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition-colors disabled:bg-slate-600" disabled={!reply.trim()}>
+                                    <PaperAirplaneIcon className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </form>
+                    </>
+                ) : (
+                    <div className="flex-1 flex flex-col justify-center items-center text-center p-4">
+                        <ChatBubbleLeftRightIcon className="w-16 h-16 text-slate-700" />
+                        <h3 className="mt-4 text-lg font-bold text-slate-400">Pilih Sesi Chat</h3>
+                        <p className="text-sm text-slate-500">Pilih sebuah sesi dari daftar di sebelah kiri untuk melihat percakapan.</p>
                     </div>
-                ))}
-                {allChatMessages.length === 0 && (
-                    <p className="text-center py-8 text-slate-500">Belum ada pesan yang masuk.</p>
                 )}
             </div>
         </div>

@@ -171,9 +171,9 @@ export interface DataContextType {
     transactions: Transaction[];
     settings: AdminSettings;
     toasts: ToastMessage[];
-    allChatMessages: ChatMessage[];
-    chatHistory: ChatMessage[];
-    sendChatMessage: (message: string) => void;
+    chatLogs: { [gameId: string]: ChatMessage[] };
+    sendChatMessage: (gameId: string, message: string) => void;
+    sendAdminChatMessage: (gameId: string, message: string) => void;
     addTransaction: (txData: AddTransactionData) => Promise<string>;
     updateTransactionStatus: (id: string, status: TransactionStatus) => void;
     updateSettings: (newSettings: Partial<AdminSettings>) => void;
