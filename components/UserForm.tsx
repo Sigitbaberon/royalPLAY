@@ -1,19 +1,19 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useData } from '../context/DataContext';
-import { ADMIN_GAME_ID, CHIP_UNIT, INDONESIAN_BANKS, INDONESIAN_EWALLETS, parseChipInput, formatChipAmount } from '../constants';
-import { PhotoIcon, BanknotesIcon, UserCircleIcon, PaperAirplaneIcon, ClipboardDocumentIcon, CheckIcon, CreditCardIcon, WalletIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
-import { PaymentMethod, PaymentDetails } from '../types';
+import { CHIP_UNIT, INDONESIAN_BANKS, INDONESIAN_EWALLETS, parseChipInput, formatChipAmount } from '../constants';
+import { PhotoIcon, BanknotesIcon, UserCircleIcon, PaperAirplaneIcon, ClipboardDocumentIcon, CheckIcon, CreditCardIcon, WalletIcon, ArrowLeftIcon, ArrowRightIcon, SparklesIcon, TicketIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import { PaymentMethod, PaymentDetails, VipTier, PromoCode } from '../types';
 
 interface UserFormProps {
     onComplete: (transactionId: string) => void;
 }
 
 const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
-    const { settings, addTransaction, showToast } = useData();
+    const { settings, addTransaction, showToast, getUserVipStatus, validatePromoCode } = useData();
     const [step, setStep] = useState(1);
     
     const [chipInput, setChipInput] = useState<string>('');
-    const [senderId, setSenderId] = useState<string>('');
+    const [senderId, setSenderId] = useState<string>(''); // User's game ID
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Bank');
     const [paymentProvider, setPaymentProvider] = useState<string>(INDONESIAN_BANKS[0]);
     const [accountNumber, setAccountNumber] = useState<string>('');
@@ -23,9 +23,51 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isCopied, setIsCopied] = useState<boolean>(false);
     
+    const [promoCodeInput, setPromoCodeInput] = useState("");
+    const [appliedPromo, setAppliedPromo] = useState<{ promo: PromoCode; message: string; } | null>(null);
+
     const parsedChipAmount = useMemo(() => parseChipInput(chipInput), [chipInput]);
-    const moneyValue = parsedChipAmount ? (parsedChipAmount / CHIP_UNIT) * settings.exchangeRate : 0;
     
+    const userVipStatus = useMemo(() => {
+        if (!settings.vipSystem.enabled || !senderId) return null;
+        return getUserVipStatus(senderId);
+    }, [senderId, getUserVipStatus, settings.vipSystem.enabled]);
+
+    const moneyValue = useMemo(() => {
+        if (!parsedChipAmount) return 0;
+        const baseValue = (parsedChipAmount / CHIP_UNIT) * settings.exchangeRate;
+        let finalValue = baseValue;
+
+        // Apply VIP Bonus
+        if (userVipStatus && settings.vipSystem.enabled) {
+            finalValue += baseValue * (userVipStatus.currentTier.sellRateBonus / 100);
+        }
+
+        // Apply Promo Bonus
+        if (appliedPromo) {
+             finalValue += baseValue * (appliedPromo.promo.discountPercent / 100);
+        }
+        
+        return finalValue;
+    }, [parsedChipAmount, settings.exchangeRate, userVipStatus, appliedPromo, settings.vipSystem.enabled]);
+    
+    const handleApplyPromo = () => {
+        if (!promoCodeInput) { showToast("Masukkan kode promo.", "error"); return; }
+        const result = validatePromoCode(promoCodeInput, 'SELL', senderId);
+        if (result.isValid) {
+            setAppliedPromo({ promo: result.promo!, message: result.message });
+            showToast(result.message, "success");
+        } else {
+            setAppliedPromo(null);
+            showToast(result.message, "error");
+        }
+    };
+    const handleRemovePromo = () => {
+        setAppliedPromo(null);
+        setPromoCodeInput("");
+        showToast("Kode promo dihapus.", "info");
+    }
+
     const paymentProviders = useMemo(() => paymentMethod === 'Bank' ? INDONESIAN_BANKS : INDONESIAN_EWALLETS, [paymentMethod]);
 
     React.useEffect(() => { setPaymentProvider(paymentProviders[0]); }, [paymentMethod, paymentProviders]);
@@ -42,16 +84,16 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
     }, [showToast]);
     
     const handleCopy = useCallback(() => {
-        navigator.clipboard.writeText(ADMIN_GAME_ID).then(() => {
+        navigator.clipboard.writeText(settings.adminGameId).then(() => {
             setIsCopied(true);
             showToast('ID Tujuan berhasil disalin!', 'success');
             setTimeout(() => setIsCopied(false), 2000);
         });
-    }, [showToast]);
+    }, [settings.adminGameId, showToast]);
 
     const nextStep = () => {
-        if (step === 1 && (parsedChipAmount <= 0 || (settings.isDestinationIdRequired && !senderId))) {
-            showToast('Lengkapi semua detail transaksi.', 'error'); return;
+        if (step === 1 && (parsedChipAmount <= 0 || !senderId)) {
+            showToast('Lengkapi ID Pengirim dan jumlah chip.', 'error'); return;
         }
         if (step === 2 && (!accountNumber || !accountName)) {
             showToast('Lengkapi detail pembayaran Anda.', 'error'); return;
@@ -60,21 +102,20 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
     };
     const prevStep = () => setStep(s => Math.max(s - 1, 1));
 
-    const handleSubmit = useCallback(() => {
+    const handleSubmit = useCallback(async () => {
         if (!proofImage) { showToast('Unggah bukti pengiriman chip.', 'error'); return; }
         const paymentDetails: PaymentDetails = { method: paymentMethod, provider: paymentProvider, accountNumber, accountName };
         setIsLoading(true);
-        setTimeout(() => {
-            try {
-                const transactionId = addTransaction({ type: 'SELL', data: { chipAmount: parsedChipAmount, paymentDetails, destinationId: senderId, proofImage }});
-                setIsLoading(false);
-                showToast('Transaksi penjualan berhasil dikirim!', 'success');
-                onComplete(transactionId);
-            } catch (e) {
-                setIsLoading(false); showToast('Gagal memproses transaksi.', 'error');
-            }
-        }, 1500);
-    }, [proofImage, paymentMethod, paymentProvider, accountNumber, accountName, addTransaction, onComplete, parsedChipAmount, senderId, showToast]);
+        try {
+            const transactionId = await addTransaction({ type: 'SELL', data: { chipAmount: parsedChipAmount, paymentDetails, destinationId: senderId, proofImage, moneyValue, promoCodeUsed: appliedPromo?.promo.code }});
+            showToast('Transaksi penjualan berhasil dikirim!', 'success');
+            onComplete(transactionId);
+        } catch (e) {
+            showToast('Gagal memproses transaksi.', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [proofImage, paymentMethod, paymentProvider, accountNumber, accountName, addTransaction, onComplete, parsedChipAmount, senderId, showToast, moneyValue, appliedPromo]);
 
     const renderStepContent = () => {
         const commonInputClass = "w-full pl-10 pr-4 py-3 bg-black/30 border border-purple-500/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-white placeholder:text-slate-500";
@@ -83,15 +124,26 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
                 return (
                     <div className="space-y-6 animate-fade-in">
                         <h3 className="text-xl font-semibold text-center text-purple-300">Langkah 1: Detail Penjualan</h3>
+                        <div><label className="block text-sm font-medium text-slate-400 mb-2">ID Pengirim (Akun Anda)</label><div className="relative"><UserCircleIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={senderId} onChange={(e) => setSenderId(e.target.value)} placeholder="Masukkan ID Game Anda" className={commonInputClass} /></div>
+                        {userVipStatus && <div className="mt-2 text-xs text-amber-400 font-semibold flex items-center gap-1"><SparklesIcon className="w-4 h-4" />Level VIP: {userVipStatus.currentTier.name} (Bonus {userVipStatus.currentTier.sellRateBonus}%)</div>}
+                        </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-2">Jumlah Chip Dijual</label>
                             <div className="relative"><BanknotesIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={chipInput} onChange={(e) => setChipInput(e.target.value)} placeholder="Contoh: 1B atau 500M" className={commonInputClass} /></div>
+                        </div>
+                         <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Kode Promo (Opsional)</label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-grow"><TicketIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={promoCodeInput} onChange={(e) => setPromoCodeInput(e.target.value)} placeholder="Masukkan kode" className={commonInputClass} disabled={!!appliedPromo} /></div>
+                                {!appliedPromo ? ( <button onClick={handleApplyPromo} className="px-4 bg-amber-600/80 hover:bg-amber-600 rounded-lg font-semibold text-sm transition">Terapkan</button>)
+                                : ( <button onClick={handleRemovePromo} className="p-2 bg-red-600/80 hover:bg-red-600 rounded-full font-semibold text-sm transition"><XCircleIcon className="w-6 h-6"/></button>)}
+                            </div>
+                            {appliedPromo && <p className="text-xs text-green-400 mt-2 font-semibold">Bonus +{appliedPromo.promo.discountPercent}% diterapkan!</p>}
                         </div>
                         <div className="bg-gradient-to-tr from-green-500/10 to-transparent p-4 rounded-lg text-center">
                             <p className="text-slate-400 text-sm">Estimasi Diterima:</p>
                             <p className="text-3xl font-bold text-green-400">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(moneyValue)}</p>
                         </div>
-                        {settings.isDestinationIdRequired && <div><label className="block text-sm font-medium text-slate-400 mb-2">ID Pengirim (Akun Anda)</label><div className="relative"><UserCircleIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={senderId} onChange={(e) => setSenderId(e.target.value)} placeholder="Untuk verifikasi oleh Admin" className={commonInputClass} /></div></div>}
                     </div>
                 );
             case 2:
@@ -110,13 +162,13 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
                 return (
                     <div className="space-y-6 animate-fade-in">
                         <h3 className="text-xl font-semibold text-center text-purple-300">Langkah 3: Unggah Bukti</h3>
-                        <div className="p-4 bg-black/30 border border-purple-500/30 rounded-lg"><label className="block text-sm text-slate-300 mb-2">Kirim chip ke ID Tujuan berikut:</label><div className="flex items-center gap-2 p-3 bg-black/50 border border-slate-700 rounded-lg"><span className="flex-grow text-xl font-mono text-amber-400 tracking-widest">{ADMIN_GAME_ID}</span><button type="button" onClick={handleCopy} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${isCopied ? 'bg-green-600' : 'bg-slate-700 hover:bg-slate-600'}`}>{isCopied ? <><CheckIcon className="h-4 w-4" /> Disalin!</> : <><ClipboardDocumentIcon className="h-4 w-4" /> Salin</>}</button></div></div>
+                        <div className="p-4 bg-black/30 border border-purple-500/30 rounded-lg"><label className="block text-sm text-slate-300 mb-2">Kirim chip ke ID Tujuan berikut:</label><div className="flex items-center gap-2 p-3 bg-black/50 border border-slate-700 rounded-lg"><span className="flex-grow text-xl font-mono text-amber-400 tracking-widest">{settings.adminGameId}</span><button type="button" onClick={handleCopy} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${isCopied ? 'bg-green-600' : 'bg-slate-700 hover:bg-slate-600'}`}>{isCopied ? <><CheckIcon className="h-4 w-4" /> Disalin!</> : <><ClipboardDocumentIcon className="h-4 w-4" /> Salin</>}</button></div></div>
                         <div><label className="block text-sm text-slate-300 mb-2">Unggah Bukti Kirim (Screenshot)</label><label htmlFor="proof-upload" className="flex flex-col items-center justify-center w-full px-4 py-10 bg-black/30 border-2 border-dashed border-purple-500/30 rounded-lg cursor-pointer hover:bg-purple-500/10 hover:border-purple-500 transition-all"><PhotoIcon className="h-10 w-10 text-slate-600" /><p className="mt-2 text-sm text-slate-400">{fileName || 'Klik untuk memilih file'}</p><p className="text-xs text-slate-500">PNG, JPG (Max 5MB)</p></label><input id="proof-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} /></div>
                     </div>
                 );
             case 4:
                 return (
-                    <div className="animate-fade-in"><h3 className="text-xl font-semibold text-center text-purple-300">Langkah 4: Konfirmasi</h3><div className="mt-6 p-4 space-y-3 bg-black/30 rounded-lg border border-purple-500/30 text-sm"><div className="flex justify-between"><span className="text-slate-400">Jumlah Chip Dijual:</span> <span className="font-bold text-white">{formatChipAmount(parsedChipAmount)}</span></div><div className="flex justify-between"><span className="text-slate-400">ID Pengirim:</span> <span className="font-mono text-white">{senderId || "-"}</span></div><div className="flex justify-between border-t border-slate-800 pt-3 mt-3"><span className="text-slate-400">Dibayarkan Ke:</span> <span className="font-bold text-white">{paymentProvider}</span></div><div className="flex justify-between"><span className="text-slate-400">No. Akun:</span> <span className="font-mono text-white">{accountNumber}</span></div><div className="flex justify-between"><span className="text-slate-400">Atas Nama:</span> <span className="font-bold text-white">{accountName}</span></div><div className="flex justify-between text-lg border-t border-slate-800 pt-3 mt-3"><span className="text-green-400">Estimasi Diterima:</span> <span className="font-bold text-green-400">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(moneyValue)}</span></div></div><p className="text-xs text-center text-slate-500 mt-4">Pastikan semua data sudah benar. Transaksi tidak dapat dibatalkan.</p></div>
+                    <div className="animate-fade-in"><h3 className="text-xl font-semibold text-center text-purple-300">Langkah 4: Konfirmasi</h3><div className="mt-6 p-4 space-y-3 bg-black/30 rounded-lg border border-purple-500/30 text-sm"><div className="flex justify-between"><span className="text-slate-400">Jumlah Chip Dijual:</span> <span className="font-bold text-white">{formatChipAmount(parsedChipAmount)}</span></div><div className="flex justify-between"><span className="text-slate-400">ID Pengirim:</span> <span className="font-mono text-white">{senderId || "-"}</span></div><div className="flex justify-between border-t border-slate-800 pt-3 mt-3"><span className="text-slate-400">Dibayarkan Ke:</span> <span className="font-bold text-white">{paymentProvider}</span></div><div className="flex justify-between"><span className="text-slate-400">No. Akun:</span> <span className="font-mono text-white">{accountNumber}</span></div><div className="flex justify-between"><span className="text-slate-400">Atas Nama:</span> <span className="font-bold text-white">{accountName}</span></div>{appliedPromo && <div className="flex justify-between"><span className="text-slate-400">Promo Digunakan:</span> <span className="font-bold text-green-400">{appliedPromo.promo.code} (+{appliedPromo.promo.discountPercent}%)</span></div>}<div className="flex justify-between text-lg border-t border-slate-800 pt-3 mt-3"><span className="text-green-400">Estimasi Diterima:</span> <span className="font-bold text-green-400">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(moneyValue)}</span></div></div><p className="text-xs text-center text-slate-500 mt-4">Pastikan semua data sudah benar. Transaksi tidak dapat dibatalkan.</p></div>
                 );
             default: return null;
         }
@@ -136,7 +188,7 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
                 ))}
             </div>
             
-            <div className="min-h-[380px]">{renderStepContent()}</div>
+            <div className="min-h-[420px]">{renderStepContent()}</div>
 
             <div className="mt-8 flex gap-4">
                 {step > 1 && <button type="button" onClick={prevStep} className="w-1/3 flex justify-center items-center gap-2 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg shadow-lg transition-all"><ArrowLeftIcon className="h-5 w-5" /> Kembali</button>}

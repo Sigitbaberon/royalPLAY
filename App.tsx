@@ -1,30 +1,38 @@
-
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { DataProvider, useData } from './context/DataContext';
 import AdminPanel from './components/AdminPanel';
 import UserView from './components/UserView';
-import { LockClosedIcon, UserIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from '@heroicons/react/24/solid';
-import { APP_NAME, APP_LOGO, GAME_PROVIDER_LOGOS } from './constants';
+import { LockClosedIcon, UserIcon, SpeakerWaveIcon, SpeakerXMarkIcon, WrenchScrewdriverIcon, StarIcon, ChatBubbleLeftRightIcon, UserGroupIcon } from '@heroicons/react/24/solid';
 import ToastContainer from './components/ToastContainer';
 import AdminPinModal from './components/AdminPinModal';
+import VipModal from './components/VipModal';
+import ChatWidget from './components/ChatWidget';
+import AffiliateModal from './components/AffiliateModal'; // Import AffiliateModal
 
 type View = 'user' | 'admin';
 
-const LiveRateTicker: React.FC = () => {
+const LiveRateTicker: React.FC<{announcement?: string}> = ({ announcement }) => {
     const { settings } = useData();
     const sellRateText = `JUAL: ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(settings.exchangeRate)} / 1B`;
     const buyRateText = `BELI: ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(settings.buyRate)} / 1B`;
+    
+    const messages = [
+        sellRateText,
+        buyRateText,
+        announcement || "TRANSAKSI AMAN & TERPROSES OTOMATIS 24/7",
+        sellRateText,
+        buyRateText,
+        announcement || "PLATFORM JUAL BELI CHIP #1 DI INDONESIA",
+        sellRateText,
+        buyRateText,
+    ];
+
     return (
         <div className="bg-black/50 overflow-hidden border-t border-b border-purple-500/10">
             <div className="animate-marquee whitespace-nowrap py-1.5 text-xs font-semibold">
-                <span className="mx-4 text-amber-400">{sellRateText}</span>
-                <span className="mx-4 text-green-400">{buyRateText}</span>
-                <span className="mx-4 text-purple-400">TRANSAKSI AMAN & TERPROSES OTOMATIS 24/7</span>
-                <span className="mx-4 text-amber-400">{sellRateText}</span>
-                <span className="mx-4 text-green-400">{buyRateText}</span>
-                <span className="mx-4 text-purple-400">PLATFORM JUAL BELI CHIP #1 DI INDONESIA</span>
-                <span className="mx-4 text-amber-400">{sellRateText}</span>
-                <span className="mx-4 text-green-400">{buyRateText}</span>
+                {messages.map((msg, i) => (
+                    <span key={i} className={`mx-4 ${i % 3 === 0 ? 'text-amber-400' : i % 3 === 1 ? 'text-green-400' : 'text-purple-400'}`}>{msg}</span>
+                ))}
             </div>
             <style>{`
                 @keyframes marquee {
@@ -32,34 +40,92 @@ const LiveRateTicker: React.FC = () => {
                     100% { transform: translateX(-50%); }
                 }
                 .animate-marquee {
-                    width: 200%;
                     display: inline-block;
                     animation: marquee 40s linear infinite;
+                    /* Calculate width based on content to ensure smooth loop */
+                    width: ${Math.max(200, messages.join('').length / 2)}%;
                 }
             `}</style>
         </div>
     );
 }
 
-const GameProviderCarousel: React.FC = () => {
-    const logos = useMemo(() => [...GAME_PROVIDER_LOGOS, ...GAME_PROVIDER_LOGOS], []);
-    return (
-        <div className="w-full py-8">
+const PartnershipSection: React.FC = () => {
+  const { settings } = useData();
+  if (!settings.enabledFeatures.providerCarousel) {
+    return null;
+  }
+
+  const partnerLogos = useMemo(() => {
+    const logos = settings.partners.map(p => p.logoUrl ? `<img src="${p.logoUrl}" alt="${p.name}"/>` : `<div class="text-slate-300 font-semibold text-center text-lg">${p.name}</div>`);
+    // Duplicate for seamless scroll
+    return [...logos, ...logos];
+  }, [settings.partners]);
+
+  useEffect(() => {
+    const logoUrls = settings.partners.filter(p => p.logoUrl).map(p => p.logoUrl);
+    (window as any).PROVIDER_LOGOS_FOR_ANIMATION = logoUrls;
+     if (typeof (window as any).generateBackgroundAnimations === 'function') {
+        (window as any).generateBackgroundAnimations();
+    }
+  }, [settings.partners]);
+
+
+  return (
+    <div className="py-12">
+      <h2 className="text-center text-base font-semibold text-slate-400 tracking-widest uppercase mb-8">
+        Didukung Penuh Oleh Mitra Terpercaya
+      </h2>
+      <div className="w-full">
             <div className="carousel-container">
                 <div className="carousel-track">
-                    {logos.map((logo, index) => (
-                        <div key={index} className="carousel-item" dangerouslySetInnerHTML={{ __html: logo }}></div>
+                    {partnerLogos.map((logoHtml, index) => (
+                        <div key={index} className="carousel-item flex items-center justify-center" dangerouslySetInnerHTML={{ __html: logoHtml }}></div>
                     ))}
                 </div>
             </div>
         </div>
-    );
+    </div>
+  );
 };
+
+
+const MaintenanceView: React.FC = () => (
+    <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+        <div className="glass-pane p-12 rounded-2xl max-w-md w-full">
+            <WrenchScrewdriverIcon className="h-20 w-20 mx-auto text-amber-400 animate-pulse" />
+            <h1 className="text-4xl font-bold text-white mt-6">Under Maintenance</h1>
+            <p className="text-slate-400 mt-4">
+                Kami sedang melakukan beberapa pembaruan untuk meningkatkan pengalaman Anda.
+                Platform akan segera kembali online. Terima kasih atas kesabaran Anda!
+            </p>
+        </div>
+    </div>
+);
+
 
 const AppContent: React.FC = () => {
     const [view, setView] = useState<View>('user');
     const [isPinModalOpen, setPinModalOpen] = useState(false);
+    const [isVipModalOpen, setVipModalOpen] = useState(false);
+    const [isAffiliateModalOpen, setAffiliateModalOpen] = useState(false); // New state for Affiliate Modal
     const [isMuted, setIsMuted] = useState(true);
+    const { settings } = useData();
+
+    const { appName, appLogoSvg } = settings.branding;
+
+    // Effect to capture referral code from URL
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const refCode = urlParams.get('ref');
+        if (refCode) {
+            sessionStorage.setItem('referrerId', refCode);
+        }
+    }, []);
+
+    useEffect(() => {
+        document.title = `${appName} | Platform Jual Beli Chip #1`;
+    }, [appName]);
 
     const switchToAdmin = useCallback(() => setPinModalOpen(true), []);
     const handlePinSuccess = useCallback(() => {
@@ -68,17 +134,68 @@ const AppContent: React.FC = () => {
     }, []);
     const switchToUser = useCallback(() => setView('user'), []);
 
+    // If in maintenance mode and not an admin, show maintenance view
+    if (settings.maintenanceMode && view !== 'admin') {
+        return (
+             <div className="min-h-screen bg-transparent font-sans relative z-10 flex flex-col">
+                <header className="bg-black/30 backdrop-blur-lg border-b border-purple-500/20 sticky top-0 z-50">
+                    <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                            <div dangerouslySetInnerHTML={{ __html: appLogoSvg }} />
+                            <h1 className="text-2xl font-bold text-white tracking-wider uppercase">
+                                {appName}
+                            </h1>
+                        </div>
+                         <button
+                            onClick={switchToAdmin}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-sm font-semibold transition-all text-purple-300 hover:text-white hover:border-purple-500/70 btn-shimmer"
+                        >
+                            <LockClosedIcon className="h-4 w-4" />
+                            Admin Panel
+                        </button>
+                    </nav>
+                </header>
+                <main className="container mx-auto px-4 sm:px-6 py-12 flex-grow">
+                    <MaintenanceView />
+                </main>
+                <AdminPinModal 
+                    isOpen={isPinModalOpen}
+                    onClose={() => setPinModalOpen(false)}
+                    onSuccess={handlePinSuccess}
+                />
+             </div>
+        )
+    }
+
     return (
         <div className="min-h-screen bg-transparent font-sans relative z-10 flex flex-col">
             <header className="bg-black/30 backdrop-blur-lg border-b border-purple-500/20 sticky top-0 z-50">
                 <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                         <div dangerouslySetInnerHTML={{ __html: APP_LOGO }} />
+                         <div dangerouslySetInnerHTML={{ __html: appLogoSvg }} />
                         <h1 className="text-2xl font-bold text-white tracking-wider uppercase">
-                            {APP_NAME}
+                            {appName}
                         </h1>
                     </div>
                     <div className="flex items-center gap-4">
+                        {settings.affiliateSystem.enabled && view === 'user' && (
+                             <button
+                                onClick={() => setAffiliateModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-lg text-sm font-semibold transition-all text-green-300 hover:text-white hover:border-green-500/70 btn-shimmer"
+                            >
+                                <UserGroupIcon className="h-4 w-4" />
+                                Afiliasi
+                            </button>
+                        )}
+                        {settings.vipSystem.enabled && view === 'user' && (
+                             <button
+                                onClick={() => setVipModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-sm font-semibold transition-all text-amber-300 hover:text-white hover:border-amber-500/70 btn-shimmer"
+                            >
+                                <StarIcon className="h-4 w-4" />
+                                VIP Status
+                            </button>
+                        )}
                         <button onClick={() => setIsMuted(!isMuted)} className="p-2 text-slate-400 hover:text-white transition-colors">
                             {isMuted ? <SpeakerXMarkIcon className="h-5 w-5" /> : <SpeakerWaveIcon className="h-5 w-5" />}
                         </button>
@@ -101,16 +218,17 @@ const AppContent: React.FC = () => {
                         )}
                     </div>
                 </nav>
-                 <LiveRateTicker />
+                 <LiveRateTicker announcement={settings.announcement} />
             </header>
 
             <main className="container mx-auto px-4 sm:px-6 py-12 flex-grow">
                 {view === 'user' ? <UserView /> : <AdminPanel />}
             </main>
             
+            {view === 'user' && <PartnershipSection />}
+            
             <footer className="text-center py-6 text-slate-500 text-xs border-t border-purple-500/10 mt-12">
-                <GameProviderCarousel />
-                <p>&copy; {new Date().getFullYear()} {APP_NAME}. Platform Jual Beli Chip Premium.</p>
+                <p>&copy; {new Date().getFullYear()} {appName}. Platform Jual Beli Chip Premium.</p>
                 <p className="mt-1">Semua transaksi dienkripsi dan diproses dengan aman. Layanan 24/7.</p>
             </footer>
             <ToastContainer />
@@ -119,6 +237,15 @@ const AppContent: React.FC = () => {
                 onClose={() => setPinModalOpen(false)}
                 onSuccess={handlePinSuccess}
             />
+            <VipModal 
+                isOpen={isVipModalOpen}
+                onClose={() => setVipModalOpen(false)}
+            />
+            <AffiliateModal 
+                isOpen={isAffiliateModalOpen}
+                onClose={() => setAffiliateModalOpen(false)}
+            />
+            {view === 'user' && settings.chatSettings.enabled && <ChatWidget />}
         </div>
     );
 };

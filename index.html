@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Royal Play | Platform Jual Beli Chip #1</title>
+    <title>Raxnet Store | Platform Jual Beli Chip #1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -59,15 +59,16 @@
       }
       .falling-icon {
         position: absolute;
-        opacity: 0.1;
+        opacity: 0.05;
         animation: fall 20s infinite linear;
         background-size: contain;
         background-repeat: no-repeat;
+        filter: grayscale(100%) brightness(1.5);
       }
       @keyframes fall {
         0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
-        10% { opacity: 0.1; }
-        90% { opacity: 0.1; }
+        10% { opacity: 0.05; }
+        90% { opacity: 0.05; }
         100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
       }
       
@@ -80,6 +81,13 @@
       @keyframes fade-in-up {
         from { opacity: 0; transform: translateY(20px) scale(0.98); }
         to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      .animate-fade-in {
+        animation: fade-in 0.5s ease-out forwards;
+      }
+       @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
       .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       
@@ -166,39 +174,63 @@
     <script type="module" src="/index.tsx"></script>
     <script>
       // Script for animated background
-      const animationContainer = document.getElementById('bg-animation');
-      const particleCount = 20;
-      for (let i = 0; i < particleCount; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        const size = Math.random() * 3 + 1;
-        particle.style.width = `${size}px`;
-        particle.style.height = `${size}px`;
-        particle.style.left = `${Math.random() * 100}vw`;
-        particle.style.animationDelay = `${Math.random() * 10}s`;
-        particle.style.animationDuration = `${Math.random() * 5 + 5}s`;
-        animationContainer.appendChild(particle);
+      function generateBackgroundAnimations() {
+        const animationContainer = document.getElementById('bg-animation');
+        if (!animationContainer) return;
+        
+        // Clear previous animations if any
+        animationContainer.innerHTML = '';
+
+        const particleCount = 20;
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'particle';
+          const size = Math.random() * 3 + 1;
+          particle.style.width = `${size}px`;
+          particle.style.height = `${size}px`;
+          particle.style.left = `${Math.random() * 100}vw`;
+          particle.style.animationDelay = `${Math.random() * 10}s`;
+          particle.style.animationDuration = `${Math.random() * 5 + 5}s`;
+          animationContainer.appendChild(particle);
+        }
+        
+        // This will be populated by the app
+        const icons = window.PROVIDER_LOGOS_FOR_ANIMATION || [];
+        if (icons.length === 0) return;
+
+        const iconCount = 15;
+        for (let i = 0; i < iconCount; i++) {
+          const iconEl = document.createElement('div');
+          iconEl.className = 'falling-icon';
+          const size = Math.random() * 50 + 30; // larger icons
+          iconEl.style.width = `${size}px`;
+          iconEl.style.height = `${size}px`;
+          iconEl.style.left = `${Math.random() * 100}vw`;
+          iconEl.style.animationDelay = `${Math.random() * 20}s`;
+          iconEl.style.animationDuration = `${Math.random() * 10 + 15}s`;
+          
+          const iconContent = icons[i % icons.length];
+          // Check if it's a full img tag or just a URL
+          if (iconContent.startsWith('<img')) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = iconContent;
+            const img = tempDiv.firstChild;
+            if(img && img.src) {
+               iconEl.style.backgroundImage = `url('${img.src}')`;
+            }
+          } else {
+             iconEl.style.backgroundImage = `url('${iconContent}')`;
+          }
+          
+          animationContainer.appendChild(iconEl);
+        }
       }
 
-      const icons = [
-        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRDcwMCI+PHBhdGggZD0iTTEyIDFsMyA3aDdsLTUgNCAyIDctNS00LTUtNCAyLTctNSA0aDd6Ii8+PC9zdmc+', // star
-        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRDcwMCI+PHBhdGggZD0iTTEyIDIxLjM1bC0xLjQ1LTEuMzJDNS40IDQuMzYgMiA3LjU1IDIgMTIuNWMwIDMuMDggMS43MSA1Ljg0IDQuMzYgNy4xOUwxMiAyMS4zNXoiLz48L3N2Zz4=', // heart (placeholder)
-        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRDcwMCI+PHBhdGggZD0iTTEyIDJDNi40OCA MiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHoiLz48L3N2Zz4=', // coin
-        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRDcwMCI+PHBhdGggZD0iTTEyIDFsLTIuNSA2SDIgOGw0LjUgMy41TDQgMjFsNS0zLjUgNSAzLjVMOCAxMS41IDQgOHoiLz48L3N2Zz4=' // crown (placeholder)
-      ];
-      const iconCount = 15;
-      for (let i = 0; i < iconCount; i++) {
-        const icon = document.createElement('div');
-        icon.className = 'falling-icon';
-        const size = Math.random() * 30 + 20;
-        icon.style.width = `${size}px`;
-        icon.style.height = `${size}px`;
-        icon.style.left = `${Math.random() * 100}vw`;
-        icon.style.animationDelay = `${Math.random() * 20}s`;
-        icon.style.animationDuration = `${Math.random() * 10 + 15}s`;
-        icon.style.backgroundImage = `url('${icons[i % icons.length]}')`;
-        animationContainer.appendChild(icon);
-      }
+      // Initial call
+      generateBackgroundAnimations();
+      // Make it globally available for the React app to re-trigger if logos change
+      window.generateBackgroundAnimations = generateBackgroundAnimations;
+
     </script>
   </body>
 </html>

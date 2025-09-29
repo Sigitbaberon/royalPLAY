@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ADMIN_PIN } from '../constants';
+import { useData } from '../context/DataContext';
 import { ShieldCheckIcon, BackspaceIcon } from '@heroicons/react/24/solid';
 
 interface AdminPinModalProps {
@@ -9,6 +9,9 @@ interface AdminPinModalProps {
 }
 
 const AdminPinModal: React.FC<AdminPinModalProps> = ({ isOpen, onClose, onSuccess }) => {
+    const { settings } = useData();
+    const ADMIN_PIN = settings.adminPin;
+
     const [pin, setPin] = useState('');
     const [isWrong, setIsWrong] = useState(false);
 
@@ -25,7 +28,7 @@ const AdminPinModal: React.FC<AdminPinModalProps> = ({ isOpen, onClose, onSucces
                 setTimeout(() => { setIsWrong(false); setPin(''); }, 500);
             }
         }
-    }, [pin, onSuccess]);
+    }, [pin, onSuccess, ADMIN_PIN]);
 
     const handlePinClick = (num: string) => {
         if (pin.length < ADMIN_PIN.length) setPin(p => p + num);
