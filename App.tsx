@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { DataProvider, useData } from './context/DataContext';
 import AdminPanel from './components/AdminPanel';
@@ -139,20 +140,20 @@ const AppContent: React.FC = () => {
         return (
              <div className="min-h-screen bg-transparent font-sans relative z-10 flex flex-col">
                 <header className="bg-black/30 backdrop-blur-lg border-b border-purple-500/20 sticky top-0 z-50">
-                    <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
+                    <nav className="container mx-auto px-6 py-3 flex justify-start items-center">
                         <div className="flex items-center gap-4">
                             <div dangerouslySetInnerHTML={{ __html: appLogoSvg }} />
                             <h1 className="text-2xl font-bold text-white tracking-wider uppercase">
                                 {appName}
                             </h1>
+                            <button
+                                onClick={switchToAdmin}
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-sm font-semibold transition-all text-purple-300 hover:text-white hover:border-purple-500/70 btn-shimmer"
+                            >
+                                <LockClosedIcon className="h-4 w-4" />
+                                <span className="hidden sm:inline">Admin Panel</span>
+                            </button>
                         </div>
-                         <button
-                            onClick={switchToAdmin}
-                            className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-sm font-semibold transition-all text-purple-300 hover:text-white hover:border-purple-500/70 btn-shimmer"
-                        >
-                            <LockClosedIcon className="h-4 w-4" />
-                            Admin Panel
-                        </button>
                     </nav>
                 </header>
                 <main className="container mx-auto px-4 sm:px-6 py-12 flex-grow">
@@ -176,6 +177,23 @@ const AppContent: React.FC = () => {
                         <h1 className="text-2xl font-bold text-white tracking-wider uppercase">
                             {appName}
                         </h1>
+                        {view === 'user' ? (
+                            <button
+                                onClick={switchToAdmin}
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-sm font-semibold transition-all text-purple-300 hover:text-white hover:border-purple-500/70 btn-shimmer"
+                            >
+                                <LockClosedIcon className="h-4 w-4" />
+                                <span className="hidden sm:inline">Admin Panel</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={switchToUser}
+                                className="flex items-center gap-2 px-4 py-2 bg-amber-500/80 hover:bg-amber-500 border border-amber-500/50 rounded-lg text-sm text-white font-semibold transition-colors btn-shimmer"
+                            >
+                                <UserIcon className="h-4 w-4" />
+                                <span className="hidden sm:inline">Tampilan Pengguna</span>
+                            </button>
+                        )}
                     </div>
                     <div className="flex items-center gap-4">
                         {settings.affiliateSystem.enabled && view === 'user' && (
@@ -199,23 +217,6 @@ const AppContent: React.FC = () => {
                         <button onClick={() => setIsMuted(!isMuted)} className="p-2 text-slate-400 hover:text-white transition-colors">
                             {isMuted ? <SpeakerXMarkIcon className="h-5 w-5" /> : <SpeakerWaveIcon className="h-5 w-5" />}
                         </button>
-                        {view === 'user' ? (
-                            <button
-                                onClick={switchToAdmin}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-sm font-semibold transition-all text-purple-300 hover:text-white hover:border-purple-500/70 btn-shimmer"
-                            >
-                                <LockClosedIcon className="h-4 w-4" />
-                                Admin Panel
-                            </button>
-                        ) : (
-                            <button
-                                onClick={switchToUser}
-                                className="flex items-center gap-2 px-4 py-2 bg-amber-500/80 hover:bg-amber-500 border border-amber-500/50 rounded-lg text-sm text-white font-semibold transition-colors btn-shimmer"
-                            >
-                                <UserIcon className="h-4 w-4" />
-                                Tampilan Pengguna
-                            </button>
-                        )}
                     </div>
                 </nav>
                  <LiveRateTicker announcement={settings.announcement} />
