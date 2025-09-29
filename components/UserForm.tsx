@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { CHIP_UNIT, INDONESIAN_BANKS, INDONESIAN_EWALLETS, parseChipInput, formatChipAmount } from '../constants';
@@ -7,9 +6,10 @@ import { PaymentMethod, PaymentDetails, PromoCode } from '../types';
 
 interface UserFormProps {
     onComplete: (transactionId: string) => void;
+    onBackToSelection?: () => void;
 }
 
-const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
+const UserForm: React.FC<UserFormProps> = ({ onComplete, onBackToSelection }) => {
     const { settings, addTransaction, showToast, validatePromoCode } = useData();
     const [step, setStep] = useState(1);
     
@@ -114,7 +114,7 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
             case 1:
                 return (
                     <div className="space-y-6 animate-fade-in">
-                        <h3 className="text-xl font-semibold text-center text-purple-300">Langkah 1: Detail Penjualan</h3>
+                        <h3 className="text-xl font-semibold text-center text-purple-300 pt-6">Langkah 1: Detail Penjualan</h3>
                         <div><label className="block text-sm font-medium text-slate-400 mb-2">ID Pengirim (Akun Anda)</label><div className="relative"><UserCircleIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={senderId} onChange={(e) => setSenderId(e.target.value)} placeholder="Masukkan ID Game Anda" className={commonInputClass} /></div>
                         </div>
                         <div>
@@ -165,7 +165,16 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
     }
 
     return (
-        <div className="glass-pane p-8 rounded-2xl max-w-lg mx-auto animate-fade-in-up">
+        <div className="glass-pane p-8 rounded-2xl max-w-lg mx-auto animate-fade-in-up relative">
+            {onBackToSelection && step === 1 && (
+                <button 
+                    onClick={onBackToSelection} 
+                    className="absolute top-6 left-6 flex items-center gap-1 text-sm text-purple-400 hover:text-white transition-colors z-10"
+                    aria-label="Kembali ke pemilihan"
+                >
+                    <ArrowLeftIcon className="h-4 w-4" /> Kembali
+                </button>
+            )}
             <div className="mb-6 flex items-center justify-between px-4">
                 {[1, 2, 3, 4].map(num => (
                     <React.Fragment key={num}>

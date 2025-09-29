@@ -46,6 +46,8 @@ const UserView: React.FC = () => {
         setView('tracker');
     };
 
+    const backToSelection = () => setActiveForm(null);
+
     // This function is called to return to the form view from tracker or via FAB
     const showForm = (formType: 'sell' | 'buy') => {
         setView('form');
@@ -88,10 +90,10 @@ const UserView: React.FC = () => {
         
         // Show the specific form based on activeForm state or if only one is enabled
         if ((activeForm === 'buy' || (buyChip && !sellChip))) {
-            return buyChip ? <BuyChipView onComplete={handleTransactionComplete} /> : null;
+            return buyChip ? <BuyChipView onComplete={handleTransactionComplete} onBackToSelection={buyChip && sellChip ? backToSelection : undefined} /> : null;
         }
         if ((activeForm === 'sell' || (sellChip && !buyChip))) {
-            return sellChip ? <UserForm onComplete={handleTransactionComplete} /> : null;
+            return sellChip ? <UserForm onComplete={handleTransactionComplete} onBackToSelection={buyChip && sellChip ? backToSelection : undefined} /> : null;
         }
 
         // Default case: No features are enabled at all.

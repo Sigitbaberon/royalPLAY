@@ -61,14 +61,6 @@ const PartnershipSection: React.FC = () => {
     return [...logos, ...logos];
   }, [settings.partners]);
 
-  useEffect(() => {
-    const logoUrls = settings.partners.filter(p => p.logoUrl).map(p => p.logoUrl);
-    (window as any).PROVIDER_LOGOS_FOR_ANIMATION = logoUrls;
-     if (typeof (window as any).generateBackgroundAnimations === 'function') {
-        (window as any).generateBackgroundAnimations();
-    }
-  }, [settings.partners]);
-
 
   return (
     <div className="py-12">
