@@ -9,6 +9,52 @@ interface UserFormProps {
     onBackToSelection?: () => void;
 }
 
+const StepIndicator: React.FC<{ step: number; labels: string[] }> = ({ step, labels }) => {
+    return (
+        <nav aria-label="Progress">
+            <ol role="list" className="flex items-center">
+                {labels.map((label, index) => {
+                    const stepNumber = index + 1;
+                    const isCompleted = step > stepNumber;
+                    const isCurrent = step === stepNumber;
+                    return (
+                        <li key={label} className={`relative ${index !== labels.length - 1 ? 'pr-8 sm:pr-20' : ''}`}>
+                            {isCompleted ? (
+                                <>
+                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                        <div className="h-0.5 w-full bg-purple-600" />
+                                    </div>
+                                    <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-purple-600">
+                                        <CheckIcon className="h-5 w-5 text-white" aria-hidden="true" />
+                                    </div>
+                                </>
+                            ) : isCurrent ? (
+                                <>
+                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                        <div className="h-0.5 w-full bg-slate-700" />
+                                    </div>
+                                    <div className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-purple-600 bg-slate-800">
+                                        <span className="h-2.5 w-2.5 rounded-full bg-purple-600" aria-hidden="true" />
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                        <div className="h-0.5 w-full bg-slate-700" />
+                                    </div>
+                                    <div className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-700 bg-slate-800" />
+                                </>
+                            )}
+                             <span className={`absolute top-10 w-max -left-2 text-center text-xs mt-2 transition-colors ${isCurrent ? 'text-white font-semibold' : 'text-slate-400'}`}>{label}</span>
+                        </li>
+                    )
+                })}
+            </ol>
+        </nav>
+    );
+};
+
+
 const UserForm: React.FC<UserFormProps> = ({ onComplete, onBackToSelection }) => {
     const { settings, addTransaction, showToast, validatePromoCode } = useData();
     const [step, setStep] = useState(1);
@@ -109,63 +155,78 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete, onBackToSelection }) =>
     }, [proofImage, paymentMethod, paymentProvider, accountNumber, accountName, addTransaction, onComplete, parsedChipAmount, senderId, showToast, moneyValue, appliedPromo]);
 
     const renderStepContent = () => {
-        const commonInputClass = "w-full pl-10 pr-4 py-3 bg-black/30 border border-purple-500/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-white placeholder:text-slate-500";
+        const inputWrapperClass = "relative";
+        const iconClass = "absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 pointer-events-none";
+        const inputWithIconClass = "input-field pl-12";
         switch(step) {
             case 1:
                 return (
                     <div className="space-y-6 animate-fade-in">
-                        <h3 className="text-xl font-semibold text-center text-purple-300 pt-6">Langkah 1: Detail Penjualan</h3>
-                        <div><label className="block text-sm font-medium text-slate-400 mb-2">ID Pengirim (Akun Anda)</label><div className="relative"><UserCircleIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={senderId} onChange={(e) => setSenderId(e.target.value)} placeholder="Masukkan ID Game Anda" className={commonInputClass} /></div>
+                        <div><label className="block text-sm font-medium text-slate-300 mb-2">ID Pengirim (Akun Anda)</label><div className={inputWrapperClass}><UserCircleIcon className={iconClass} /><input type="text" value={senderId} onChange={(e) => setSenderId(e.target.value)} placeholder="Masukkan ID Game Anda" className={inputWithIconClass} /></div>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">Jumlah Chip Dijual</label>
-                            <div className="relative"><BanknotesIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={chipInput} onChange={(e) => setChipInput(e.target.value)} placeholder="Contoh: 1B atau 500M" className={commonInputClass} /></div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Jumlah Chip Dijual</label>
+                            <div className={inputWrapperClass}><BanknotesIcon className={iconClass} /><input type="text" value={chipInput} onChange={(e) => setChipInput(e.target.value)} placeholder="Contoh: 1B atau 500M" className={inputWithIconClass} /></div>
                         </div>
                          <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">Kode Promo (Opsional)</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Kode Promo (Opsional)</label>
                             <div className="flex gap-2">
-                                <div className="relative flex-grow"><TicketIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={promoCodeInput} onChange={(e) => setPromoCodeInput(e.target.value)} placeholder="Masukkan kode" className={commonInputClass} disabled={!!appliedPromo} /></div>
-                                {!appliedPromo ? ( <button onClick={handleApplyPromo} className="px-4 bg-amber-600/80 hover:bg-amber-600 rounded-lg font-semibold text-sm transition">Terapkan</button>)
-                                : ( <button onClick={handleRemovePromo} className="p-2 bg-red-600/80 hover:bg-red-600 rounded-full font-semibold text-sm transition"><XCircleIcon className="w-6 h-6"/></button>)}
+                                <div className={`${inputWrapperClass} flex-grow`}><TicketIcon className={iconClass} /><input type="text" value={promoCodeInput} onChange={(e) => setPromoCodeInput(e.target.value)} placeholder="Masukkan kode" className={inputWithIconClass} disabled={!!appliedPromo} /></div>
+                                {!appliedPromo ? ( <button onClick={handleApplyPromo} className="btn-secondary">Terapkan</button>)
+                                : ( <button onClick={handleRemovePromo} className="p-2 bg-red-600/20 hover:bg-red-600/40 rounded-lg transition text-red-400"><XCircleIcon className="w-6 h-6"/></button>)}
                             </div>
-                            {appliedPromo && <p className="text-xs text-green-400 mt-2 font-semibold">Bonus +{appliedPromo.promo.discountPercent}% diterapkan!</p>}
+                            {appliedPromo && <p className="text-sm text-green-400 mt-2 font-semibold flex items-center gap-1"><SparklesIcon className="w-4 h-4" /> Bonus +{appliedPromo.promo.discountPercent}% diterapkan!</p>}
                         </div>
-                        <div className="bg-gradient-to-tr from-green-500/10 to-transparent p-4 rounded-lg text-center">
-                            <p className="text-slate-400 text-sm">Estimasi Diterima:</p>
-                            <p className="text-3xl font-bold text-green-400">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(moneyValue)}</p>
+                        <div className="bg-gradient-to-tr from-green-900/50 to-transparent p-4 rounded-lg text-center border border-green-500/20 mt-4">
+                            <p className="text-slate-300 text-sm">Estimasi Diterima:</p>
+                            <p className="text-4xl font-bold text-green-300 tracking-tight">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(moneyValue)}</p>
                         </div>
                     </div>
                 );
             case 2:
                 return (
                     <div className="space-y-6 animate-fade-in">
-                        <h3 className="text-xl font-semibold text-center text-purple-300">Langkah 2: Tujuan Pembayaran</h3>
-                        <div className="grid grid-cols-2 gap-2 p-1 bg-black/30 rounded-lg"><button type="button" onClick={() => setPaymentMethod('Bank')} className={`py-2 px-4 rounded-md text-sm font-semibold flex items-center justify-center gap-2 transition-all ${paymentMethod === 'Bank' ? 'bg-purple-600 text-white shadow-[0_0_10px_theme(colors.purple.500)]' : 'hover:bg-purple-500/10'}`}> <CreditCardIcon className="h-4 w-4" /> Bank</button><button type="button" onClick={() => setPaymentMethod('E-Wallet')} className={`py-2 px-4 rounded-md text-sm font-semibold flex items-center justify-center gap-2 transition-all ${paymentMethod === 'E-Wallet' ? 'bg-purple-600 text-white shadow-[0_0_10px_theme(colors.purple.500)]' : 'hover:bg-purple-500/10'}`}> <WalletIcon className="h-4 w-4" /> E-Wallet</button></div>
+                        <div className="grid grid-cols-2 gap-2 p-1 bg-black/30 rounded-lg"><button type="button" onClick={() => setPaymentMethod('Bank')} className={`py-2.5 px-4 rounded-md text-sm font-semibold flex items-center justify-center gap-2 transition-all ${paymentMethod === 'Bank' ? 'bg-purple-600 text-white shadow-[0_0_10px_var(--primary-glow)]' : 'hover:bg-purple-500/10'}`}> <CreditCardIcon className="h-5 w-5" /> Bank</button><button type="button" onClick={() => setPaymentMethod('E-Wallet')} className={`py-2.5 px-4 rounded-md text-sm font-semibold flex items-center justify-center gap-2 transition-all ${paymentMethod === 'E-Wallet' ? 'bg-purple-600 text-white shadow-[0_0_10px_var(--primary-glow)]' : 'hover:bg-purple-500/10'}`}> <WalletIcon className="h-5 w-5" /> E-Wallet</button></div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                             <div><label className="block text-xs text-slate-400 mb-1">{paymentMethod === 'Bank' ? 'Pilih Bank' : 'Pilih E-Wallet'}</label><select value={paymentProvider} onChange={e => setPaymentProvider(e.target.value)} className={commonInputClass.replace('pl-10', 'pl-3')}><option disabled>Pilih</option>{paymentProviders.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
-                             <div><label className="block text-xs text-slate-400 mb-1">{paymentMethod === 'Bank' ? 'Nomor Rekening' : 'Nomor HP'}</label><input type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} placeholder={paymentMethod === 'Bank' ? 'Cth: 1234567890' : 'Cth: 081234567890'} className={commonInputClass.replace('pl-10', 'pl-3')} /></div>
-                             <div className="sm:col-span-2"><label className="block text-xs text-slate-400 mb-1">Nama Pemilik Akun</label><input type="text" value={accountName} onChange={e => setAccountName(e.target.value)} placeholder="Sesuai buku tabungan" className={commonInputClass.replace('pl-10', 'pl-3')} /></div>
+                             <div><label className="block text-sm text-slate-300 mb-2">{paymentMethod === 'Bank' ? 'Pilih Bank' : 'Pilih E-Wallet'}</label><select value={paymentProvider} onChange={e => setPaymentProvider(e.target.value)} className="input-field"><option disabled>Pilih</option>{paymentProviders.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+                             <div><label className="block text-sm text-slate-300 mb-2">{paymentMethod === 'Bank' ? 'Nomor Rekening' : 'Nomor HP'}</label><input type="text" value={accountNumber} onChange={e => setAccountNumber(e.target.value)} placeholder={paymentMethod === 'Bank' ? 'Cth: 1234567890' : 'Cth: 081234567890'} className="input-field" /></div>
+                             <div className="sm:col-span-2"><label className="block text-sm text-slate-300 mb-2">Nama Pemilik Akun</label><input type="text" value={accountName} onChange={e => setAccountName(e.target.value)} placeholder="Sesuai buku tabungan" className="input-field" /></div>
                         </div>
                     </div>
                 );
             case 3:
                 return (
                     <div className="space-y-6 animate-fade-in">
-                        <h3 className="text-xl font-semibold text-center text-purple-300">Langkah 3: Unggah Bukti</h3>
-                        <div className="p-4 bg-black/30 border border-purple-500/30 rounded-lg"><label className="block text-sm text-slate-300 mb-2">Kirim chip ke ID Tujuan berikut:</label><div className="flex items-center gap-2 p-3 bg-black/50 border border-slate-700 rounded-lg"><span className="flex-grow text-xl font-mono text-amber-400 tracking-widest">{settings.adminGameId}</span><button type="button" onClick={handleCopy} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${isCopied ? 'bg-green-600' : 'bg-slate-700 hover:bg-slate-600'}`}>{isCopied ? <><CheckIcon className="h-4 w-4" /> Disalin!</> : <><ClipboardDocumentIcon className="h-4 w-4" /> Salin</>}</button></div></div>
+                        <div className="p-4 bg-black/30 border border-purple-500/30 rounded-lg"><label className="block text-sm text-slate-300 mb-2">Kirim chip ke ID Tujuan berikut:</label><div className="flex items-center gap-2 p-3 bg-black/50 border border-slate-700 rounded-lg"><span className="flex-grow text-xl font-mono text-yellow-300 tracking-widest">{settings.adminGameId}</span><button type="button" onClick={handleCopy} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${isCopied ? 'bg-green-600' : 'bg-slate-700 hover:bg-slate-600'}`}>{isCopied ? <><CheckIcon className="h-4 w-4" /> Disalin!</> : <><ClipboardDocumentIcon className="h-4 w-4" /> Salin</>}</button></div></div>
                         <div><label className="block text-sm text-slate-300 mb-2">Unggah Bukti Kirim (Screenshot)</label><label htmlFor="proof-upload" className="flex flex-col items-center justify-center w-full px-4 py-10 bg-black/30 border-2 border-dashed border-purple-500/30 rounded-lg cursor-pointer hover:bg-purple-500/10 hover:border-purple-500 transition-all"><PhotoIcon className="h-10 w-10 text-slate-600" /><p className="mt-2 text-sm text-slate-400">{fileName || 'Klik untuk memilih file'}</p><p className="text-xs text-slate-500">PNG, JPG (Max 5MB)</p></label><input id="proof-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} /></div>
                     </div>
                 );
             case 4:
                 return (
-                    <div className="animate-fade-in"><h3 className="text-xl font-semibold text-center text-purple-300">Langkah 4: Konfirmasi</h3><div className="mt-6 p-4 space-y-3 bg-black/30 rounded-lg border border-purple-500/30 text-sm"><div className="flex justify-between"><span className="text-slate-400">Jumlah Chip Dijual:</span> <span className="font-bold text-white">{formatChipAmount(parsedChipAmount)}</span></div><div className="flex justify-between"><span className="text-slate-400">ID Pengirim:</span> <span className="font-mono text-white">{senderId || "-"}</span></div><div className="flex justify-between border-t border-slate-800 pt-3 mt-3"><span className="text-slate-400">Dibayarkan Ke:</span> <span className="font-bold text-white">{paymentProvider}</span></div><div className="flex justify-between"><span className="text-slate-400">No. Akun:</span> <span className="font-mono text-white">{accountNumber}</span></div><div className="flex justify-between"><span className="text-slate-400">Atas Nama:</span> <span className="font-bold text-white">{accountName}</span></div>{appliedPromo && <div className="flex justify-between"><span className="text-slate-400">Promo Digunakan:</span> <span className="font-bold text-green-400">{appliedPromo.promo.code} (+{appliedPromo.promo.discountPercent}%)</span></div>}<div className="flex justify-between text-lg border-t border-slate-800 pt-3 mt-3"><span className="text-green-400">Estimasi Diterima:</span> <span className="font-bold text-green-400">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(moneyValue)}</span></div></div><p className="text-xs text-center text-slate-500 mt-4">Pastikan semua data sudah benar. Transaksi tidak dapat dibatalkan.</p></div>
+                    <div className="animate-fade-in space-y-6">
+                        <h3 className="text-xl text-white font-bold text-center">Ringkasan Transaksi</h3>
+                        <div className="p-6 space-y-4 bg-black/30 rounded-lg border border-purple-500/30 text-base">
+                            <div className="flex justify-between items-center"><span className="text-slate-400">Jumlah Chip Dijual:</span> <span className="font-bold text-white text-lg">{formatChipAmount(parsedChipAmount)}</span></div>
+                            <div className="flex justify-between items-center"><span className="text-slate-400">ID Pengirim:</span> <span className="font-mono text-white">{senderId || "-"}</span></div>
+                            <hr className="border-slate-800 my-3"/>
+                            <div className="flex justify-between items-center"><span className="text-slate-400">Dibayarkan Ke:</span> <span className="font-bold text-white">{paymentProvider}</span></div>
+                            <div className="flex justify-between items-center"><span className="text-slate-400">No. Akun:</span> <span className="font-mono text-white">{accountNumber}</span></div>
+                            <div className="flex justify-between items-center"><span className="text-slate-400">Atas Nama:</span> <span className="font-bold text-white">{accountName}</span></div>
+                            {appliedPromo && <div className="flex justify-between items-center"><span className="text-slate-400 flex items-center gap-1"><SparklesIcon className="w-4 h-4 text-yellow-400"/>Promo:</span> <span className="font-bold text-green-400">{appliedPromo.promo.code} (+{appliedPromo.promo.discountPercent}%)</span></div>}
+                             <div className="flex justify-between items-center text-xl border-t-2 border-dashed border-slate-700 pt-4 mt-4">
+                                <span className="text-green-300 font-semibold">Total Diterima:</span>
+                                <span className="font-bold text-green-300 tracking-tight">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(moneyValue)}</span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-center text-slate-500 mt-4">Pastikan semua data sudah benar. Transaksi tidak dapat dibatalkan setelah dikirim.</p>
+                    </div>
                 );
             default: return null;
         }
     }
 
     return (
-        <div className="glass-pane p-8 rounded-2xl max-w-lg mx-auto animate-fade-in-up relative">
+        <div className="glass-pane p-8 rounded-2xl max-w-2xl mx-auto animate-slide-in-up relative">
             {onBackToSelection && step === 1 && (
                 <button 
                     onClick={onBackToSelection} 
@@ -175,27 +236,18 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete, onBackToSelection }) =>
                     <ArrowLeftIcon className="h-4 w-4" /> Kembali
                 </button>
             )}
-            <div className="mb-6 flex items-center justify-between px-4">
-                {[1, 2, 3, 4].map(num => (
-                    <React.Fragment key={num}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold transition-all duration-300 relative ${step >= num ? 'bg-purple-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
-                            {num}
-                            {step >= num && <div className="absolute inset-0 rounded-full bg-purple-500 animate-ping -z-10 opacity-75"></div>}
-                        </div>
-                        {num < 4 && <div className={`flex-1 h-1 mx-2 transition-all duration-500 ${step > num ? 'bg-purple-500' : 'bg-slate-700'}`}></div>}
-                    </React.Fragment>
-                ))}
+            <div className="mb-12 pt-4 flex justify-center">
+                <StepIndicator step={step} labels={['Detail', 'Pembayaran', 'Bukti', 'Konfirmasi']} />
             </div>
             
             <div className="min-h-[420px]">{renderStepContent()}</div>
 
             <div className="mt-8 flex gap-4">
-                {step > 1 && <button type="button" onClick={prevStep} className="w-1/3 flex justify-center items-center gap-2 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg shadow-lg transition-all"><ArrowLeftIcon className="h-5 w-5" /> Kembali</button>}
-                {step < 4 ? <button type="button" onClick={nextStep} className="btn-shimmer flex-1 flex justify-center items-center gap-2 py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg shadow-lg transition-all transform hover:scale-105">Lanjut <ArrowRightIcon className="h-5 w-5" /></button>
-                : <button onClick={handleSubmit} disabled={isLoading} className="btn-shimmer flex-1 flex justify-center items-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg shadow-lg disabled:bg-slate-600 disabled:cursor-not-allowed transition-all transform hover:scale-105 relative overflow-hidden group">
-                    {isLoading ? (<><svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>Mengirim...</>) 
+                {step > 1 && <button type="button" onClick={prevStep} className="btn-secondary flex-1 sm:flex-none sm:w-1/3 flex justify-center items-center gap-2"><ArrowLeftIcon className="h-5 w-5" /> Kembali</button>}
+                {step < 4 ? <button type="button" onClick={nextStep} className="btn-primary btn-shimmer flex-grow flex justify-center items-center gap-2">Lanjut <ArrowRightIcon className="h-5 w-5" /></button>
+                : <button onClick={handleSubmit} disabled={isLoading} className="btn-primary btn-shimmer flex-grow flex justify-center items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
+                    {isLoading ? (<><svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" className="opacity-75"></path></svg>Mengirim...</>) 
                     : (<><PaperAirplaneIcon className="h-5 w-5" /> Kirim & Proses Transaksi</>)}
-                     <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-40 group-hover:animate-shine" />
                     </button>}
             </div>
         </div>

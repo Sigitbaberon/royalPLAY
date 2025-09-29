@@ -19,10 +19,10 @@ const VipModal: React.FC<VipModalProps> = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-[99] animate-fade-in" onClick={onClose}>
-            <div className="glass-pane rounded-2xl p-8 w-full max-w-2xl text-center animate-fade-in-up" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-[99] animate-fade-in p-4" onClick={onClose}>
+            <div className="glass-pane rounded-2xl p-8 w-full max-w-2xl text-center animate-slide-in-up" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
-                     <h2 className="text-2xl font-bold text-amber-300 flex items-center gap-2"><SparklesIcon className="w-7 h-7"/> Program Loyalitas VIP</h2>
+                     <h2 className="text-2xl font-bold text-yellow-300 flex items-center gap-2"><SparklesIcon className="w-7 h-7"/> Program Loyalitas VIP</h2>
                      <button onClick={onClose} className="p-1 rounded-full text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
                         <XMarkIcon className="w-6 h-6" />
                     </button>
@@ -37,7 +37,7 @@ const VipModal: React.FC<VipModalProps> = ({ isOpen, onClose }) => {
                         value={gameId} 
                         onChange={(e) => setGameId(e.target.value)} 
                         placeholder="Masukkan ID Game Anda di sini..."
-                        className="w-full pl-12 pr-4 py-3 bg-black/30 border border-amber-500/30 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all text-white placeholder:text-slate-500"
+                        className="input-field pl-12"
                     />
                 </div>
 
@@ -55,10 +55,10 @@ const VipModal: React.FC<VipModalProps> = ({ isOpen, onClose }) => {
                              <div>
                                 <div className="flex justify-between text-sm mb-1">
                                     <span className="text-slate-400">Progres ke <span className="font-bold text-white">{vipStatus.nextTier.name}</span></span>
-                                    <span className="text-amber-400">{vipStatus.progress.toFixed(1)}%</span>
+                                    <span className="text-yellow-400">{vipStatus.progress.toFixed(1)}%</span>
                                 </div>
                                 <div className="w-full bg-slate-700 rounded-full h-2.5">
-                                    <div className="bg-gradient-to-r from-amber-500 to-yellow-400 h-2.5 rounded-full" style={{ width: `${vipStatus.progress}%` }}></div>
+                                    <div className="bg-gradient-to-r from-yellow-500 to-orange-400 h-2.5 rounded-full" style={{ width: `${vipStatus.progress}%` }}></div>
                                 </div>
                                 <p className="text-xs text-slate-500 text-right mt-1">Butuh {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(vipStatus.nextTier.threshold - vipStatus.totalVolume)} lagi</p>
                             </div>

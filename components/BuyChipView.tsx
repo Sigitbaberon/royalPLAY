@@ -9,6 +9,52 @@ interface BuyChipViewProps {
     onBackToSelection?: () => void;
 }
 
+const StepIndicator: React.FC<{ step: number; labels: string[] }> = ({ step, labels }) => {
+    return (
+        <nav aria-label="Progress">
+            <ol role="list" className="flex items-center">
+                {labels.map((label, index) => {
+                    const stepNumber = index + 1;
+                    const isCompleted = step > stepNumber;
+                    const isCurrent = step === stepNumber;
+                    return (
+                        <li key={label} className={`relative ${index !== labels.length - 1 ? 'pr-8 sm:pr-20' : ''}`}>
+                            {isCompleted ? (
+                                <>
+                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                        <div className="h-0.5 w-full bg-green-500" />
+                                    </div>
+                                    <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-green-500">
+                                        <CheckIcon className="h-5 w-5 text-white" aria-hidden="true" />
+                                    </div>
+                                </>
+                            ) : isCurrent ? (
+                                <>
+                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                        <div className="h-0.5 w-full bg-slate-700" />
+                                    </div>
+                                    <div className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-green-500 bg-slate-800">
+                                        <span className="h-2.5 w-2.5 rounded-full bg-green-500" aria-hidden="true" />
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                        <div className="h-0.5 w-full bg-slate-700" />
+                                    </div>
+                                    <div className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-700 bg-slate-800" />
+                                </>
+                            )}
+                             <span className={`absolute top-10 w-max -left-2 text-center text-xs mt-2 transition-colors ${isCurrent ? 'text-white font-semibold' : 'text-slate-400'}`}>{label}</span>
+                        </li>
+                    )
+                })}
+            </ol>
+        </nav>
+    );
+};
+
+
 const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete, onBackToSelection }) => {
     const { settings, addTransaction, showToast, validatePromoCode } = useData();
     const [step, setStep] = useState(1);
@@ -115,15 +161,16 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete, onBackToSelection
     }, [proofImage, selectedPackage, destinationId, addTransaction, onComplete, showToast, getAdjustedPrice, appliedPromo]);
 
     const renderStepContent = () => {
-        const commonInputClass = "w-full pl-10 pr-4 py-3 bg-black/30 border border-green-500/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white placeholder:text-slate-500";
+        const inputWrapperClass = "relative";
+        const iconClass = "absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500 pointer-events-none";
+        const inputWithIconClass = "input-field pl-12";
         switch(step) {
             case 1:
                 return (
                     <div className="animate-fade-in space-y-6">
-                        <h3 className="text-xl font-semibold text-center text-green-300 pt-6">Langkah 1: ID, Paket & Promo</h3>
                          <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">ID Game Tujuan (Akun Anda)</label>
-                            <div className="relative"><UserCircleIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={destinationId} onChange={(e) => setDestinationId(e.target.value)} placeholder="Masukkan ID Game Anda" className={commonInputClass} /></div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">ID Game Tujuan (Akun Anda)</label>
+                            <div className={inputWrapperClass}><UserCircleIcon className={iconClass} /><input type="text" value={destinationId} onChange={(e) => setDestinationId(e.target.value)} placeholder="Masukkan ID Game Anda" className={inputWithIconClass} /></div>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {CHIP_PACKAGES.map(pkg => {
@@ -131,34 +178,33 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete, onBackToSelection
                                 const basePrice = (pkg.chipAmount / CHIP_UNIT) * settings.buyRate;
                                 const hasDiscount = price < basePrice;
                                 return (
-                                <button key={pkg.id} onClick={() => setSelectedPackage(pkg)} className={`relative p-4 rounded-lg text-center border-2 transition-all transform hover:scale-105 ${selectedPackage?.id === pkg.id ? 'border-green-400 bg-green-500/10 shadow-[0_0_15px_theme(colors.green.500)]' : 'border-slate-700 hover:border-slate-500 bg-black/20'}`}>
+                                <button key={pkg.id} onClick={() => setSelectedPackage(pkg)} className={`relative p-4 rounded-lg text-center border-2 transition-all transform hover:scale-105 ${selectedPackage?.id === pkg.id ? 'border-green-400 bg-green-500/10 shadow-[0_0_15px_rgba(74,222,128,0.5)]' : 'border-slate-700 hover:border-slate-500 bg-black/20'}`}>
                                     {hasDiscount && <div className="absolute top-0 right-0 text-xs bg-red-600 text-white font-bold px-2 py-0.5 rounded-bl-lg rounded-tr-md">DISKON</div>}
                                     <div dangerouslySetInnerHTML={{ __html: pkg.icon }} />
                                     <p className="font-bold text-lg text-white mt-2">{pkg.name}</p>
-                                    <p className="text-sm text-amber-400">{formatChipAmount(pkg.chipAmount)}</p>
+                                    <p className="text-sm text-yellow-400">{formatChipAmount(pkg.chipAmount)}</p>
                                     <p className="text-xs text-slate-400 mt-1">{hasDiscount && <span className="line-through mr-1">{new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', minimumFractionDigits: 0}).format(basePrice)}</span>}{new Intl.NumberFormat('id-ID', {style: 'currency', currency: 'IDR', minimumFractionDigits: 0}).format(price)}</p>
                                 </button>
                             )})}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-400 mb-2">Kode Promo (Opsional)</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Kode Promo (Opsional)</label>
                             <div className="flex gap-2">
-                                <div className="relative flex-grow"><TicketIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={promoCodeInput} onChange={(e) => setPromoCodeInput(e.target.value)} placeholder="Masukkan kode" className={commonInputClass} disabled={!!appliedPromo} /></div>
-                                {!appliedPromo ? ( <button onClick={handleApplyPromo} className="px-4 bg-amber-600/80 hover:bg-amber-600 rounded-lg font-semibold text-sm transition">Terapkan</button>)
-                                : ( <button onClick={handleRemovePromo} className="p-2 bg-red-600/80 hover:bg-red-600 rounded-full font-semibold text-sm transition"><XCircleIcon className="w-6 h-6"/></button>)}
+                                <div className={`${inputWrapperClass} flex-grow`}><TicketIcon className={iconClass} /><input type="text" value={promoCodeInput} onChange={(e) => setPromoCodeInput(e.target.value)} placeholder="Masukkan kode" className={inputWithIconClass} disabled={!!appliedPromo} /></div>
+                                {!appliedPromo ? ( <button onClick={handleApplyPromo} className="btn-secondary">Terapkan</button>)
+                                : ( <button onClick={handleRemovePromo} className="p-2 bg-red-600/20 hover:bg-red-600/40 rounded-lg transition text-red-400"><XCircleIcon className="w-6 h-6"/></button>)}
                             </div>
-                            {appliedPromo && <p className="text-xs text-green-400 mt-2 font-semibold">Diskon {appliedPromo.promo.discountPercent}% diterapkan!</p>}
+                            {appliedPromo && <p className="text-sm text-green-400 mt-2 font-semibold flex items-center gap-1"><SparklesIcon className="w-4 h-4" /> Diskon {appliedPromo.promo.discountPercent}% diterapkan!</p>}
                         </div>
                     </div>
                 );
             case 2:
                 return (
                     <div className="space-y-6 animate-fade-in">
-                        <h3 className="text-xl font-semibold text-center text-green-300">Langkah 2: Pembayaran & Bukti</h3>
                         { noPaymentMethodAvailable ? (
-                            <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg text-center">
-                                <ExclamationTriangleIcon className="w-10 h-10 mx-auto text-amber-400" />
-                                <h4 className="font-bold text-amber-300 mt-2">Metode Pembayaran Tidak Tersedia</h4>
+                            <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-center">
+                                <ExclamationTriangleIcon className="w-10 h-10 mx-auto text-yellow-400" />
+                                <h4 className="font-bold text-yellow-300 mt-2">Metode Pembayaran Tidak Tersedia</h4>
                                 <p className="text-sm text-slate-400 mt-1">Saat ini tidak ada metode pembayaran yang aktif. Silakan hubungi admin untuk informasi lebih lanjut.</p>
                             </div>
                         ) : (
@@ -174,7 +220,7 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete, onBackToSelection
                                     {paymentMethods.bankTransfer && (
                                         <div className="flex-grow w-full">
                                             <div className="flex items-center gap-2 p-3 bg-black/50 border border-slate-700 rounded-lg">
-                                                <p className="flex-grow text-sm font-mono text-amber-400 whitespace-pre-wrap">{adminPaymentText}</p>
+                                                <p className="flex-grow text-sm font-mono text-yellow-400 whitespace-pre-wrap">{adminPaymentText}</p>
                                                 <button type="button" onClick={handleCopy} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${isCopied ? 'bg-green-600' : 'bg-slate-700 hover:bg-slate-600'}`}>{isCopied ? <><CheckIcon className="h-4 w-4" /> Disalin!</> : <><ClipboardDocumentIcon className="h-4 w-4" /> Salin</>}</button>
                                             </div>
                                         </div>
@@ -188,18 +234,29 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete, onBackToSelection
             case 3:
                 const finalPrice = selectedPackage ? getAdjustedPrice(selectedPackage, appliedPromo) : 0;
                 return (
-                    <div className="animate-fade-in"><h3 className="text-xl font-semibold text-center text-green-300">Langkah 3: Konfirmasi</h3><div className="mt-6 p-4 space-y-3 bg-black/30 rounded-lg border border-green-500/30 text-sm"><div className="flex justify-between"><span className="text-slate-400">Paket Chip:</span> <span className="font-bold text-white">{selectedPackage?.name}</span></div><div className="flex justify-between"><span className="text-slate-400">Jumlah Chip:</span> <span className="font-bold text-white">{formatChipAmount(selectedPackage?.chipAmount || 0)}</span></div><div className="flex justify-between border-t border-slate-800 pt-3 mt-3"><span className="text-slate-400">ID Tujuan:</span> <span className="font-mono text-white">{destinationId}</span></div>{appliedPromo && <div className="flex justify-between"><span className="text-slate-400">Promo Digunakan:</span> <span className="font-bold text-green-400">{appliedPromo.promo.code} (-{appliedPromo.promo.discountPercent}%)</span></div>}<div className="flex justify-between text-lg border-t border-slate-800 pt-3 mt-3"><span className="text-green-400">Total Bayar:</span> <span className="font-bold text-green-400">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(finalPrice)}</span></div></div><p className="text-xs text-center text-slate-500 mt-4">Pastikan ID tujuan sudah benar. Kesalahan input bukan tanggung jawab kami.</p></div>
+                    <div className="animate-fade-in space-y-6">
+                        <h3 className="text-xl text-white font-bold text-center">Ringkasan Transaksi</h3>
+                        <div className="p-6 space-y-4 bg-black/30 rounded-lg border border-green-500/30 text-base">
+                            <div className="flex justify-between items-center"><span className="text-slate-400">Paket Chip:</span> <span className="font-bold text-white text-lg">{selectedPackage?.name}</span></div>
+                            <div className="flex justify-between items-center"><span className="text-slate-400">Jumlah Chip:</span> <span className="font-bold text-white text-lg">{formatChipAmount(selectedPackage?.chipAmount || 0)}</span></div>
+                            <hr className="border-slate-800 my-3"/>
+                            <div className="flex justify-between items-center"><span className="text-slate-400">ID Tujuan:</span> <span className="font-mono text-white">{destinationId}</span></div>
+                            {appliedPromo && <div className="flex justify-between items-center"><span className="text-slate-400 flex items-center gap-1"><SparklesIcon className="w-4 h-4 text-yellow-400"/>Promo:</span> <span className="font-bold text-green-400">{appliedPromo.promo.code} (-{appliedPromo.promo.discountPercent}%)</span></div>}
+                             <div className="flex justify-between items-center text-xl border-t-2 border-dashed border-slate-700 pt-4 mt-4">
+                                <span className="text-green-300 font-semibold">Total Bayar:</span>
+                                <span className="font-bold text-green-300 tracking-tight">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(finalPrice)}</span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-center text-slate-500 mt-4">Pastikan ID tujuan sudah benar. Kesalahan input bukan tanggung jawab kami.</p>
+                    </div>
                 );
             default: return null;
         }
     }
-
-    // Adjusting step labels
-    const stepLabels = ["Paket & Promo", "Pembayaran", "Konfirmasi"];
-
+    
     return (
         <>
-            <div className="glass-pane p-8 rounded-2xl max-w-lg mx-auto animate-fade-in-up relative">
+            <div className="glass-pane p-8 rounded-2xl max-w-2xl mx-auto animate-slide-in-up relative">
                  {onBackToSelection && step === 1 && (
                     <button 
                         onClick={onBackToSelection} 
@@ -209,24 +266,16 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete, onBackToSelection
                         <ArrowLeftIcon className="h-4 w-4" /> Kembali
                     </button>
                 )}
-                <div className="mb-6 flex items-center justify-between px-4">
-                    {[1, 2, 3].map(num => (
-                        <React.Fragment key={num}>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold transition-all duration-300 relative ${step >= num ? 'bg-green-500 text-white' : 'bg-slate-700 text-slate-400'}`}>
-                                {num}
-                                {step >= num && <div className="absolute inset-0 rounded-full bg-green-500 animate-ping -z-10 opacity-75"></div>}
-                            </div>
-                            {num < 3 && <div className={`flex-1 h-1 mx-2 transition-all duration-500 ${step > num ? 'bg-green-500' : 'bg-slate-700'}`}></div>}
-                        </React.Fragment>
-                    ))}
+                <div className="mb-12 pt-4 flex justify-center">
+                    <StepIndicator step={step} labels={['Paket', 'Bayar', 'Konfirmasi']} />
                 </div>
                 
                 <div className="min-h-[420px]">{renderStepContent()}</div>
 
                 <div className="mt-8 flex gap-4">
-                    {step > 1 && <button type="button" onClick={prevStep} className="w-1/3 flex justify-center items-center gap-2 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg shadow-lg transition-all"><ArrowLeftIcon className="h-5 w-5" /> Kembali</button>}
-                    {step < 3 ? <button type="button" onClick={nextStep} disabled={step === 2 && noPaymentMethodAvailable} className="btn-shimmer flex-1 flex justify-center items-center gap-2 py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:bg-slate-600 disabled:cursor-not-allowed">Lanjut <ArrowRightIcon className="h-5 w-5" /></button>
-                    : <button onClick={handleSubmit} disabled={isLoading} className="btn-shimmer flex-1 flex justify-center items-center gap-2 py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg shadow-lg disabled:bg-slate-600 disabled:cursor-not-allowed transition-all transform hover:scale-105">
+                    {step > 1 && <button type="button" onClick={prevStep} className="btn-secondary flex-1 sm:flex-none sm:w-1/3 flex justify-center items-center gap-2"><ArrowLeftIcon className="h-5 w-5" /> Kembali</button>}
+                    {step < 3 ? <button type="button" onClick={nextStep} disabled={step === 2 && noPaymentMethodAvailable} className="btn-primary btn-shimmer flex-grow flex justify-center items-center gap-2 !bg-green-600">Lanjut <ArrowRightIcon className="h-5 w-5" /></button>
+                    : <button onClick={handleSubmit} disabled={isLoading} className="btn-primary btn-shimmer flex-grow flex justify-center items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600">
                         {isLoading ? 'Memproses...' : <><ShoppingCartIcon className="h-5 w-5" /> Beli & Proses</>}
                         </button>}
                 </div>
@@ -234,7 +283,7 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete, onBackToSelection
             
             {isQrisModalOpen && qrisImage && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-50 p-4" onClick={() => setQrisModalOpen(false)}>
-                    <div className="glass-pane rounded-2xl w-full max-w-xs p-6 space-y-4 animate-fade-in-up" onClick={e => e.stopPropagation()}>
+                    <div className="glass-pane rounded-2xl w-full max-w-xs p-6 space-y-4 animate-slide-in-up" onClick={e => e.stopPropagation()}>
                          <div className="flex justify-between items-center">
                             <h3 className="text-lg font-bold text-white">Pindai untuk Membayar</h3>
                             <button onClick={() => setQrisModalOpen(false)} className="p-1 rounded-full text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
@@ -244,7 +293,7 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete, onBackToSelection
                         <img src={qrisImage} alt="QRIS Code" className="w-full h-auto rounded-lg border-2 border-slate-600" />
                         <button 
                             onClick={handleDownloadQris}
-                            className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg shadow-lg transition-all"
+                            className="btn-primary w-full flex justify-center items-center gap-2"
                         >
                             <ArrowDownTrayIcon className="w-5 h-5" />
                             Unduh QRIS

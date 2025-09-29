@@ -34,7 +34,9 @@ const sendTelegramNotification = async (settings: AdminSettings, transaction: Tr
         return;
     }
 
-    const appUrl = window.location.origin + window.location.pathname;
+    // FIX: Construct a robust, public-facing URL from window.location.host
+    // to avoid using blob: URLs that are invalid for external services.
+    const appUrl = `https://${window.location.host}/`;
     const adminSecret = settings.adminPin;
 
     const keyboard = {

@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { DataProvider, useData } from './context/DataContext';
 import AdminPanel from './components/AdminPanel';
@@ -18,34 +17,37 @@ const LiveRateTicker: React.FC<{announcement?: string}> = ({ announcement }) => 
     const sellRateText = `JUAL: ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(settings.exchangeRate)} / 1B`;
     const buyRateText = `BELI: ${new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(settings.buyRate)} / 1B`;
     
-    const messages = [
+    const messages = useMemo(() => [
         sellRateText,
         buyRateText,
         announcement || "TRANSAKSI AMAN & TERPROSES OTOMATIS 24/7",
-        sellRateText,
+        ` • ${sellRateText}`,
         buyRateText,
         announcement || "PLATFORM JUAL BELI CHIP #1 DI INDONESIA",
-        sellRateText,
-        buyRateText,
-    ];
+    ], [sellRateText, buyRateText, announcement]);
+
+    const fullMessageString = useMemo(() => messages.join(' • '), [messages]);
 
     return (
-        <div className="bg-black/50 overflow-hidden border-t border-b border-purple-500/10">
-            <div className="animate-marquee whitespace-nowrap py-1.5 text-xs font-semibold">
-                {messages.map((msg, i) => (
-                    <span key={i} className={`mx-4 ${i % 3 === 0 ? 'text-amber-400' : i % 3 === 1 ? 'text-green-400' : 'text-purple-400'}`}>{msg}</span>
-                ))}
+        <div className="bg-black/50 overflow-hidden border-t border-b border-[var(--border-color)] relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-transparent to-yellow-500/10 opacity-50"></div>
+            <div className="marquee-container text-xs font-bold tracking-wider py-2.5">
+                <span className="text-purple-400">{fullMessageString} •&nbsp;</span>
+                <span className="text-yellow-400">{fullMessageString} •&nbsp;</span>
+                <span className="text-green-400">{fullMessageString} •&nbsp;</span>
+                <span className="text-purple-400">{fullMessageString} •&nbsp;</span>
             </div>
             <style>{`
-                @keyframes marquee {
-                    0% { transform: translateX(0%); }
-                    100% { transform: translateX(-50%); }
+                .marquee-container {
+                    white-space: nowrap;
+                    animation: marquee 80s linear infinite;
                 }
-                .animate-marquee {
-                    display: inline-block;
-                    animation: marquee 40s linear infinite;
-                    /* Calculate width based on content to ensure smooth loop */
-                    width: ${Math.max(200, messages.join('').length / 2)}%;
+                .group:hover .marquee-container {
+                    animation-play-state: paused;
+                }
+                @keyframes marquee {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
                 }
             `}</style>
         </div>
@@ -59,18 +61,18 @@ const PartnershipSection: React.FC = () => {
   }
 
   const partnerLogos = useMemo(() => {
-    const logos = settings.partners.map(p => p.logoUrl ? `<img src="${p.logoUrl}" alt="${p.name}"/>` : `<div class="text-slate-300 font-semibold text-center text-lg">${p.name}</div>`);
+    const logos = settings.partners.map(p => p.logoUrl ? `<img src="${p.logoUrl}" alt="${p.name}" class="max-h-12 w-auto object-contain"/>` : `<div class="text-slate-300 font-semibold text-center text-lg">${p.name}</div>`);
     // Duplicate for seamless scroll
     return [...logos, ...logos];
   }, [settings.partners]);
 
 
   return (
-    <div className="py-12">
-      <h2 className="text-center text-base font-semibold text-slate-400 tracking-widest uppercase mb-8">
+    <div className="py-24">
+      <h2 className="text-center text-base font-semibold text-slate-400 tracking-widest uppercase mb-12 animate-slide-in-up">
         Didukung Penuh Oleh Mitra Terpercaya
       </h2>
-      <div className="w-full">
+      <div className="w-full animate-slide-in-up" style={{animationDelay: '150ms'}}>
             <div className="carousel-container">
                 <div className="carousel-track">
                     {partnerLogos.map((logoHtml, index) => (
@@ -85,9 +87,9 @@ const PartnershipSection: React.FC = () => {
 
 
 const MaintenanceView: React.FC = () => (
-    <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
-        <div className="glass-pane p-12 rounded-2xl max-w-md w-full">
-            <WrenchScrewdriverIcon className="h-20 w-20 mx-auto text-amber-400 animate-pulse" />
+    <div className="min-h-screen flex flex-col items-center justify-center text-center p-4 -mt-24">
+        <div className="glass-pane p-12 rounded-2xl max-w-md w-full animate-slide-in-up">
+            <WrenchScrewdriverIcon className="h-20 w-20 mx-auto text-yellow-400 animate-pulse" />
             <h1 className="text-4xl font-bold text-white mt-6">Under Maintenance</h1>
             <p className="text-slate-400 mt-4">
                 Kami sedang melakukan beberapa pembaruan untuk meningkatkan pengalaman Anda.
@@ -146,8 +148,8 @@ const AppContent: React.FC = () => {
     if (settings.maintenanceMode && view !== 'admin') {
         return (
              <div className="min-h-screen bg-transparent font-sans relative z-10 flex flex-col">
-                <header className="bg-black/30 backdrop-blur-lg border-b border-purple-500/20 sticky top-0 z-50">
-                    <nav className="container mx-auto px-6 py-3 flex justify-start items-center">
+                <header className="bg-black/30 backdrop-blur-lg border-b border-[var(--border-color)] sticky top-0 z-50">
+                    <nav className="container mx-auto px-6 py-4 flex justify-start items-center">
                         <div className="flex items-center gap-4">
                             <div dangerouslySetInnerHTML={{ __html: appLogoSvg }} />
                             <h1 className="text-2xl font-bold text-white tracking-wider uppercase">
@@ -155,7 +157,7 @@ const AppContent: React.FC = () => {
                             </h1>
                             <button
                                 onClick={switchToAdmin}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-sm font-semibold transition-all text-purple-300 hover:text-white hover:border-purple-500/70 btn-shimmer"
+                                className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 hover:bg-purple-600/30 border border-purple-600/40 rounded-lg text-sm font-semibold transition-all text-purple-300 hover:text-white hover:border-purple-500/70"
                             >
                                 <LockClosedIcon className="h-4 w-4" />
                                 <span className="hidden sm:inline">Admin Panel</span>
@@ -177,8 +179,8 @@ const AppContent: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-transparent font-sans relative z-10 flex flex-col">
-            <header className="bg-black/30 backdrop-blur-lg border-b border-purple-500/20 sticky top-0 z-50">
-                <nav className="container mx-auto px-6 py-3 flex justify-between items-center">
+            <header className="bg-black/30 backdrop-blur-lg border-b border-[var(--border-color)] sticky top-0 z-50">
+                <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
                     <div className="flex items-center gap-4">
                          <div dangerouslySetInnerHTML={{ __html: appLogoSvg }} />
                         <h1 className="text-2xl font-bold text-white tracking-wider uppercase">
@@ -187,7 +189,7 @@ const AppContent: React.FC = () => {
                         {view === 'user' ? (
                             <button
                                 onClick={switchToAdmin}
-                                className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-sm font-semibold transition-all text-purple-300 hover:text-white hover:border-purple-500/70 btn-shimmer"
+                                className="flex items-center gap-2 px-3 py-2 bg-slate-800/50 hover:bg-purple-600/30 border border-purple-600/40 rounded-lg text-sm font-semibold transition-all text-purple-300 hover:text-white hover:border-purple-500/70"
                             >
                                 <LockClosedIcon className="h-4 w-4" />
                                 <span className="hidden sm:inline">Admin Panel</span>
@@ -195,7 +197,7 @@ const AppContent: React.FC = () => {
                         ) : (
                             <button
                                 onClick={switchToUser}
-                                className="flex items-center gap-2 px-4 py-2 bg-amber-500/80 hover:bg-amber-500 border border-amber-500/50 rounded-lg text-sm text-white font-semibold transition-colors btn-shimmer"
+                                className="flex items-center gap-2 px-3 py-2 bg-yellow-500/80 hover:bg-yellow-500 border border-yellow-500/50 rounded-lg text-sm text-black font-semibold transition-colors btn-shimmer"
                             >
                                 <UserIcon className="h-4 w-4" />
                                 <span className="hidden sm:inline">Tampilan Pengguna</span>
@@ -205,13 +207,13 @@ const AppContent: React.FC = () => {
                     {view === 'user' && (
                         <div className="flex items-center gap-2">
                              {settings.vipSystem.enabled && (
-                                <button onClick={() => setVipModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg text-sm font-semibold transition-all text-amber-300 hover:text-white">
+                                <button onClick={() => setVipModalOpen(true)} className="flex items-center gap-2 px-3 py-2 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 rounded-lg text-sm font-semibold transition-all text-yellow-300 hover:text-white">
                                     <SparklesIcon className="h-4 w-4" />
                                     <span className="hidden sm:inline">Program VIP</span>
                                 </button>
                             )}
                              {settings.affiliateSystem.enabled && (
-                                <button onClick={() => setAffiliateModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-sm font-semibold transition-all text-green-300 hover:text-white">
+                                <button onClick={() => setAffiliateModalOpen(true)} className="flex items-center gap-2 px-3 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-lg text-sm font-semibold transition-all text-green-300 hover:text-white">
                                     <ShareIcon className="h-4 w-4" />
                                     <span className="hidden sm:inline">Afiliasi</span>
                                 </button>
@@ -228,9 +230,9 @@ const AppContent: React.FC = () => {
             
             {view === 'user' && <PartnershipSection />}
             
-            <footer className="text-center py-6 text-slate-500 text-xs border-t border-purple-500/10 mt-12">
+            <footer className="text-center py-8 text-slate-500 text-sm border-t border-[var(--border-color)] mt-16">
                 <p>&copy; {new Date().getFullYear()} {appName}. Platform Jual Beli Chip Premium.</p>
-                <p className="mt-1">Semua transaksi dienkripsi dan diproses dengan aman. Layanan 24/7.</p>
+                <p className="mt-1 text-xs">Semua transaksi dienkripsi dan diproses dengan aman. Layanan 24/7.</p>
             </footer>
 
             {/* Modals & Widgets */}

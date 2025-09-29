@@ -8,114 +8,64 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
       :root {
-        --bg-color: #0c0a18;
-        --primary-glow: #a855f7; /* purple-500 */
-        --secondary-glow: #f59e0b; /* amber-500 */
-        --gold-color: #FFD700;
+        --bg-color: #060410;
+        --primary-color: #A855F7; /* Purple-500 */
+        --primary-glow: rgba(168, 85, 247, 0.5);
+        --secondary-color: #FACC15; /* Yellow-400 */
+        --secondary-glow: rgba(250, 204, 21, 0.5);
+        --accent-color: #22d3ee; /* Cyan 400 */
+        --text-light: #E5E7EB; /* Gray-200 */
+        --text-medium: #9CA3AF; /* Gray-400 */
+        --text-dark: #6B7280; /* Gray-500 */
+        --border-color: rgba(168, 85, 247, 0.2);
+        --glass-bg: linear-gradient(135deg, rgba(10, 8, 22, 0.5), rgba(16, 14, 28, 0.7));
+        --glass-shadow: rgba(0, 0, 0, 0.3);
+        --success-color: #4ade80; /* Green 400 */
+        --error-color: #f87171; /* Red 400 */
       }
       body {
         font-family: 'Poppins', sans-serif;
         overflow-x: hidden;
+        background-color: var(--bg-color);
+        color: var(--text-light);
       }
       
       /* --- New Animated Background --- */
       #animated-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -3;
-        background-color: var(--bg-color);
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; background-color: var(--bg-color);
       }
       
       @keyframes move-nebula {
-        0% { background-position: 0% 50%; background-size: 300% 300%; }
-        50% { background-position: 100% 50%; background-size: 200% 200%; }
-        100% { background-position: 0% 50%; background-size: 300% 300%; }
+        0% { background-position: 0% 50%; background-size: 200% 200%; }
+        50% { background-position: 100% 50%; background-size: 250% 250%; }
+        100% { background-position: 0% 50%; background-size: 200% 200%; }
       }
 
       #animated-bg::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         background-image: 
-          radial-gradient(ellipse at 15% 25%, hsla(263, 90%, 65%, 0.25), transparent 50%),
-          radial-gradient(ellipse at 85% 65%, hsla(38, 96%, 53%, 0.2), transparent 50%),
-          radial-gradient(ellipse at 50% 50%, hsla(220, 50%, 30%, 0.15), transparent 60%);
+          radial-gradient(ellipse at 15% 25%, hsla(263, 80%, 55%, 0.1), transparent 50%),
+          radial-gradient(ellipse at 85% 65%, hsla(44, 95%, 55%, 0.08), transparent 50%),
+          radial-gradient(ellipse at 50% 50%, hsla(220, 50%, 30%, 0.1), transparent 60%);
         background-size: 200% 200%;
-        animation: move-nebula 30s ease-in-out infinite;
+        animation: move-nebula 45s ease-in-out infinite;
       }
 
+      /* Starfield */
+      #stars-container {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: -1;
+      }
       @keyframes animStar {
         from { transform: translateY(0px); }
         to { transform: translateY(-2000px); }
       }
-      #stars-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        z-index: -1;
-      }
-      #stars-container::before {
-        content: '';
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background-image:
-            linear-gradient(to right, rgba(168, 85, 247, 0.08) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(168, 85, 247, 0.08) 1px, transparent 1px);
-        background-size: 60px 60px;
-        opacity: 0.5;
-        animation: pulse-grid 15s infinite alternate;
-      }
-      @keyframes pulse-grid {
-        from { opacity: 0.2; transform: scale(1); }
-        to { opacity: 0.6; transform: scale(1.05); }
-      }
-      #stars1, #stars2, #stars3 {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        height: 100%;
-        display: block;
-      }
-      #stars1 {
-        background-image:
-          radial-gradient(1px, var(--gold-color) 1px, transparent 2px),
-          radial-gradient(1px, var(--gold-color) 1px, transparent 2px);
-        background-size: 100px 100px;
-        background-position: 0 0, 50px 50px;
-        animation: animStar 50s linear infinite;
-      }
-       #stars2 {
-        background-image:
-          radial-gradient(2px, var(--primary-glow) 2px, transparent 3px),
-          radial-gradient(1px, white 1px, transparent 2px);
-        background-size: 200px 200px;
-        background-position: 0 0, 100px 100px;
-        animation: animStar 100s linear infinite;
-      }
-      #stars3 {
-        background-image:
-          radial-gradient(3px, var(--secondary-glow) 3px, transparent 4px),
-          radial-gradient(2px, white 2px, transparent 3px);
-        background-size: 400px 400px;
-        background-position: 0 0, 200px 200px;
-        animation: animStar 150s linear infinite;
-      }
+      .stars { position: absolute; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; display: block; background-repeat: repeat; }
+      #stars1 { background-image: radial-gradient(1px 1px at 25px 25px, white, transparent); background-size: 100px 100px; animation: animStar 70s linear infinite; }
+      #stars2 { background-image: radial-gradient(1.5px 1.5px at 50px 50px, var(--primary-color), transparent); background-size: 200px 200px; animation: animStar 120s linear infinite; }
+      #stars3 { background-image: radial-gradient(2px 2px at 75px 75px, var(--secondary-color), transparent); background-size: 300px 300px; animation: animStar 180s linear infinite; }
       
       /* --- General Animations --- */
       @keyframes shake {
@@ -123,80 +73,97 @@
         30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); }
       }
       .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-      @keyframes fade-in-up {
+      @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+      .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+      @keyframes slide-in-up-fade {
         from { opacity: 0; transform: translateY(20px) scale(0.98); }
         to { opacity: 1; transform: translateY(0) scale(1); }
       }
-      .animate-fade-in {
-        animation: fade-in 0.5s ease-out forwards;
-      }
-       @keyframes fade-in {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      .animate-slide-in-up { animation: slide-in-up-fade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       
-      /* Glassmorphism & Glow */
+      /* Enhanced Glassmorphism & Glow */
       .glass-pane {
-        background: rgba(12, 10, 24, 0.5);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        box-shadow: 0 8px 32px 0 rgba(168, 85, 247, 0.1);
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border: 1px solid transparent;
+        box-shadow: 0 8px 32px 0 var(--glass-shadow);
+        position: relative;
+      }
+      .glass-pane::before {
+        content: ''; position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+        z-index: -1; margin: -1px; /* Safari hack */
+        border-radius: inherit;
+        background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(168, 85, 247, 0.05) 50%, rgba(34, 211, 238, 0.1));
       }
 
-      /* Shimmer Effect */
-      .btn-shimmer {
-        position: relative;
-        overflow: hidden;
+      /* --- Component System --- */
+      .btn-primary {
+        position: relative; overflow: hidden;
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, var(--primary-color), #c084fc);
+        color: white; font-weight: 700; border-radius: 0.5rem;
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.3), 0 4px 6px rgba(0,0,0,0.2);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        transform: translateZ(0); /* Promotes to composite layer */
+      }
+      .btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 25px var(--primary-glow), 0 6px 10px rgba(0,0,0,0.3); }
+      .btn-primary:disabled { background: var(--text-dark); box-shadow: none; cursor: not-allowed; transform: none; }
+
+      .btn-secondary {
+        padding: 0.6rem 1.2rem;
+        background: rgba(30, 28, 48, 0.5); border: 1px solid var(--border-color);
+        color: var(--text-light); font-weight: 600; border-radius: 0.5rem;
+        transition: all 0.3s;
+      }
+      .btn-secondary:hover { background: rgba(168, 85, 247, 0.15); border-color: var(--primary-color); color: white; }
+      
+      .input-field {
+        width: 100%;
+        background-color: rgba(0,0,0,0.4);
+        border: 1px solid var(--border-color);
+        border-radius: 0.5rem; padding: 0.75rem 1rem;
+        font-size: 1rem; color: var(--text-light);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .input-field:focus {
+        outline: none; border-color: var(--primary-color);
+        box-shadow: 0 0 15px var(--primary-glow);
+      }
+      .input-field::placeholder { color: var(--text-dark); }
+      .input-field:disabled { background-color: rgba(0,0,0,0.2); cursor: not-allowed; }
+
+      /* Shimmer Effect for Buttons */
+      @keyframes shine {
+        0% { transform: translateX(-100%) skewX(-20deg); }
+        100% { transform: translateX(200%) skewX(-20deg); }
       }
       .btn-shimmer::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 60%);
-        transform: rotate(45deg);
-        opacity: 0;
-        transition: opacity 0.5s, left 0.5s;
-        pointer-events: none;
+        content: ''; position: absolute; top: 0; left: 0;
+        width: 50%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        pointer-events: none; opacity: 0;
       }
-      .btn-shimmer:hover::after {
-        opacity: 1;
-        left: 50%;
-      }
+      .btn-shimmer:hover::after { opacity: 1; animation: shine 0.75s; }
 
       /* Scrollbar Styles */
       ::-webkit-scrollbar { width: 8px; }
-      ::-webkit-scrollbar-track { background: #1a1a2e; }
-      ::-webkit-scrollbar-thumb { background: #4a4a6a; border-radius: 4px; }
-      ::-webkit-scrollbar-thumb:hover { background: #6a6a8a; }
+      ::-webkit-scrollbar-track { background: #100E1C; }
+      ::-webkit-scrollbar-thumb { background: var(--primary-color); background-image: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background-color: #6a6a8a; }
 
       /* Game Provider Carousel */
       .carousel-container {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        overflow: hidden;
-        -webkit-mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
-        mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+        display: flex; align-items: center; width: 100%; overflow: hidden;
+        -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+        mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
       }
-      .carousel-track {
-        display: flex;
-        animation: scroll 40s linear infinite;
-      }
+      .carousel-track { display: flex; animation: scroll 40s linear infinite; }
       .carousel-item {
-        flex-shrink: 0;
-        width: 150px;
-        padding: 0 20px;
-        filter: grayscale(100%) brightness(0.7);
-        transition: filter 0.3s;
+        flex-shrink: 0; width: 150px; padding: 0 20px;
+        filter: grayscale(80%) brightness(0.7) contrast(1.2);
+        transition: filter 0.4s;
       }
-      .carousel-item:hover {
-        filter: grayscale(0%) brightness(1);
-      }
+      .carousel-item:hover { filter: grayscale(0%) brightness(1) contrast(1); }
       @keyframes scroll {
         0% { transform: translateX(0); }
         100% { transform: translateX(-50%); }
@@ -216,9 +183,9 @@
   <body class="text-gray-300">
     <div id="animated-bg"></div>
     <div id="stars-container">
-      <div id="stars1"></div>
-      <div id="stars2"></div>
-      <div id="stars3"></div>
+      <div id="stars1" class="stars"></div>
+      <div id="stars2" class="stars"></div>
+      <div id="stars3" class="stars"></div>
     </div>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>

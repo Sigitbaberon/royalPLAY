@@ -14,7 +14,9 @@ const AffiliateModal: React.FC<AffiliateModalProps> = ({ isOpen, onClose }) => {
 
     const referralLink = useMemo(() => {
         if (!gameId) return '';
-        const baseUrl = window.location.origin + window.location.pathname;
+        // FIX: Construct a robust, public-facing URL from window.location.host
+        // to avoid using blob: URLs that are invalid for external services.
+        const baseUrl = `https://${window.location.host}/`;
         return `${baseUrl}?ref=${gameId}`;
     }, [gameId]);
 
@@ -35,8 +37,8 @@ const AffiliateModal: React.FC<AffiliateModalProps> = ({ isOpen, onClose }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-[99] animate-fade-in" onClick={onClose}>
-            <div className="glass-pane rounded-2xl p-8 w-full max-w-3xl text-center animate-fade-in-up" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-[99] animate-fade-in p-4" onClick={onClose}>
+            <div className="glass-pane rounded-2xl p-8 w-full max-w-3xl text-center animate-slide-in-up" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center mb-6">
                      <h2 className="text-2xl font-bold text-green-300 flex items-center gap-2"><ShareIcon className="w-7 h-7"/> Program Afiliasi</h2>
                      <button onClick={onClose} className="p-1 rounded-full text-slate-400 hover:bg-slate-700 hover:text-white transition-colors">
@@ -53,7 +55,7 @@ const AffiliateModal: React.FC<AffiliateModalProps> = ({ isOpen, onClose }) => {
                         value={gameId} 
                         onChange={(e) => setGameId(e.target.value)} 
                         placeholder="Masukkan ID Game Anda untuk membuat link..."
-                        className="w-full pl-12 pr-4 py-3 bg-black/30 border border-green-500/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white placeholder:text-slate-500"
+                        className="input-field pl-12"
                     />
                 </div>
 
@@ -62,7 +64,7 @@ const AffiliateModal: React.FC<AffiliateModalProps> = ({ isOpen, onClose }) => {
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-2">Link Referral Unik Anda</label>
                              <div className="flex items-center gap-2 p-3 bg-black/50 border border-slate-700 rounded-lg">
-                                <span className="flex-grow text-sm font-mono text-amber-400 tracking-tight overflow-x-auto whitespace-nowrap">{referralLink}</span>
+                                <span className="flex-grow text-sm font-mono text-yellow-400 tracking-tight overflow-x-auto whitespace-nowrap">{referralLink}</span>
                                 <button type="button" onClick={handleCopy} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${isCopied ? 'bg-green-600' : 'bg-slate-700 hover:bg-slate-600'}`}>
                                     {isCopied ? <><CheckIcon className="h-4 w-4" /> Disalin!</> : <><ClipboardDocumentIcon className="h-4 w-4" /> Salin</>}
                                 </button>

@@ -73,16 +73,36 @@ const UserView: React.FC = () => {
         // If both features are enabled AND no form is chosen yet, show the selection menu.
         if (buyChip && sellChip && activeForm === null) {
             return (
-                <div className="glass-pane p-12 rounded-2xl max-w-lg mx-auto text-center animate-fade-in-up">
-                    <h2 className="text-3xl font-bold text-white mb-4">Selamat Datang di {settings.branding.appName}</h2>
-                    <p className="text-slate-400 mb-8">Pilih transaksi yang ingin Anda lakukan.</p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <button onClick={() => setActiveForm('buy')} className="btn-shimmer flex-1 flex justify-center items-center gap-3 py-4 px-6 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-lg transition-all transform hover:scale-105">
-                            <ArrowTrendingDownIcon className="w-6 h-6" /> Beli Chip
-                        </button>
-                        <button onClick={() => setActiveForm('sell')} className="btn-shimmer flex-1 flex justify-center items-center gap-3 py-4 px-6 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg shadow-lg transition-all transform hover:scale-105">
-                           <ArrowTrendingUpIcon className="w-6 h-6" /> Jual Chip
-                        </button>
+                <div className="max-w-4xl mx-auto text-center animate-slide-in-up">
+                    <h2 className="text-5xl font-extrabold text-white mb-4">Selamat Datang di {settings.branding.appName}</h2>
+                    <p className="text-slate-300 mb-12 text-lg">Platform Jual Beli Chip #1 di Indonesia. Pilih transaksi Anda.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Buy Card */}
+                        <div 
+                            onClick={() => setActiveForm('buy')} 
+                            className="glass-pane rounded-2xl p-8 cursor-pointer group relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-green-500/20 hover:-translate-y-2"
+                        >
+                            <div className="absolute top-0 right-0 h-32 w-32 bg-green-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-500"></div>
+                            <div className="relative z-10">
+                                <ArrowTrendingDownIcon className="w-16 h-16 text-green-400 mb-4 mx-auto md:mx-0" />
+                                <h3 className="text-3xl font-bold text-white mb-2">Beli Chip</h3>
+                                <p className="text-slate-400 mb-6">Dapatkan chip dengan harga terbaik dan proses instan. Kirim langsung ke ID game Anda.</p>
+                                <span className="font-bold text-lg text-green-400 group-hover:text-white transition-colors">Mulai Beli &rarr;</span>
+                            </div>
+                        </div>
+                         {/* Sell Card */}
+                        <div 
+                            onClick={() => setActiveForm('sell')} 
+                            className="glass-pane rounded-2xl p-8 cursor-pointer group relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 hover:-translate-y-2"
+                        >
+                            <div className="absolute top-0 right-0 h-32 w-32 bg-purple-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-500"></div>
+                            <div className="relative z-10">
+                                <ArrowTrendingUpIcon className="w-16 h-16 text-purple-400 mb-4 mx-auto md:mx-0" />
+                                <h3 className="text-3xl font-bold text-white mb-2">Jual Chip</h3>
+                                <p className="text-slate-400 mb-6">Uangkan chip Anda dengan kurs tertinggi. Pembayaran aman dan cepat ke rekening Anda.</p>
+                                <span className="font-bold text-lg text-purple-400 group-hover:text-white transition-colors">Mulai Jual &rarr;</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             );
@@ -99,7 +119,7 @@ const UserView: React.FC = () => {
         // Default case: No features are enabled at all.
         return (
              <div className="glass-pane p-8 rounded-2xl max-w-lg mx-auto text-center">
-                <h3 className="text-xl font-bold text-amber-300">Layanan Dinonaktifkan</h3>
+                <h3 className="text-xl font-bold text-yellow-300">Layanan Dinonaktifkan</h3>
                 <p className="text-slate-400 mt-2">Fitur jual dan beli chip sedang tidak tersedia saat ini. Silakan coba lagi nanti.</p>
             </div>
         );

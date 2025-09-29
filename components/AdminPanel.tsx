@@ -1,21 +1,20 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useData } from '../context/DataContext';
 import { AdminSettings, Transaction, TransactionStatus, TransactionType, PromoCode, Partner, ChatMessage } from '../types';
 import { formatChipAmount, DEFAULT_ADMIN_PIN } from '../constants';
-import { Cog6ToothIcon, ArrowPathIcon, CheckCircleIcon, XCircleIcon, ClockIcon, BanknotesIcon, ShoppingCartIcon, WalletIcon, BuildingLibraryIcon, ChartBarIcon, PowerIcon, CurrencyDollarIcon, CalendarDaysIcon, ShieldCheckIcon, StarIcon, BellIcon, PaintBrushIcon, KeyIcon, ArrowDownOnSquareIcon, TrashIcon, TicketIcon, PencilIcon, UserGroupIcon, ChatBubbleLeftRightIcon, PaperClipIcon, ShareIcon, TrophyIcon, ClipboardDocumentCheckIcon, PaperAirplaneIcon } from '@heroicons/react/24/solid';
+import { Cog6ToothIcon, ArrowPathIcon, CheckCircleIcon, XCircleIcon, ClockIcon, BanknotesIcon, ShoppingCartIcon, WalletIcon, BuildingLibraryIcon, ChartBarIcon, PowerIcon, CurrencyDollarIcon, CalendarDaysIcon, ShieldCheckIcon, StarIcon, BellIcon, PaintBrushIcon, KeyIcon, ArrowDownOnSquareIcon, TrashIcon, TicketIcon, PencilIcon, UserGroupIcon, ChatBubbleLeftRightIcon, PaperClipIcon, ShareIcon, TrophyIcon, ClipboardDocumentCheckIcon, PaperAirplaneIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 
 type AdminTab = 'dashboard' | 'transactions' | 'chat' | 'settings';
 
 const Accordion: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }> = ({ title, icon, children, defaultOpen = false }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
-        <div className="glass-pane rounded-2xl overflow-hidden">
+        <div className="glass-pane rounded-xl overflow-hidden border border-purple-500/20">
             <button onClick={() => setIsOpen(!isOpen)} className="w-full flex justify-between items-center p-5 text-left bg-black/20 hover:bg-black/40 transition-colors">
                 <h3 className="text-lg font-bold text-purple-300 flex items-center gap-3">{icon}{title}</h3>
-                <svg className={`w-6 h-6 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                <ChevronDownIcon className={`w-6 h-6 transform transition-transform text-purple-300 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
-            {isOpen && <div className="p-6 border-t border-purple-500/10 animate-fade-in">{children}</div>}
+            {isOpen && <div className="p-6 border-t border-[var(--border-color)] animate-fade-in">{children}</div>}
         </div>
     );
 }
@@ -108,15 +107,15 @@ const SettingsPanel: React.FC<{
          <div className="space-y-6">
             <Accordion title="Branding Aplikasi" icon={<PaintBrushIcon className="w-5 h-5"/>} >
                 <div className="grid grid-cols-1 gap-6">
-                    <div><label className="block text-sm font-medium text-slate-300 mb-2">Nama Aplikasi</label><input type="text" value={localSettings.branding.appName} onChange={e => handleGenericChange('branding.appName', e.target.value)} className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-3 py-2 text-sm" /></div>
-                    <div><label className="block text-sm font-medium text-slate-300 mb-2">Kode Logo (SVG)</label><textarea value={localSettings.branding.appLogoSvg} onChange={e => handleGenericChange('branding.appLogoSvg', e.target.value)} rows={4} className="w-full bg-black/30 border border-purple-500/30 rounded-lg px-3 py-2 text-sm font-mono resize-y" /></div>
+                    <div><label className="block text-sm font-medium text-slate-300 mb-2">Nama Aplikasi</label><input type="text" value={localSettings.branding.appName} onChange={e => handleGenericChange('branding.appName', e.target.value)} className="input-field" /></div>
+                    <div><label className="block text-sm font-medium text-slate-300 mb-2">Kode Logo (SVG)</label><textarea value={localSettings.branding.appLogoSvg} onChange={e => handleGenericChange('branding.appLogoSvg', e.target.value)} rows={4} className="input-field font-mono text-xs" /></div>
                 </div>
             </Accordion>
             
             <Accordion title="Marketing & Kode Promo" icon={<TicketIcon className="w-5 h-5"/>}>
                 <div className="space-y-6">
                     <div>
-                        <h4 className="font-semibold mb-2">Buat Kode Promo Baru</h4>
+                        <h4 className="font-semibold mb-2 text-white">Buat Kode Promo Baru</h4>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-black/20 rounded-lg">
                             <input type="text" placeholder="Kode Promo" value={newPromo.code} onChange={e => setNewPromo(p => ({...p, code: e.target.value.toUpperCase()}))} className="input-field" />
                             <input type="number" placeholder="Diskon (%)" value={newPromo.discountPercent} onChange={e => setNewPromo(p => ({...p, discountPercent: parseFloat(e.target.value)}))} className="input-field" />
@@ -126,11 +125,11 @@ const SettingsPanel: React.FC<{
                         </div>
                     </div>
                      <div>
-                        <h4 className="font-semibold mb-2">Manajemen Kode Promo</h4>
+                        <h4 className="font-semibold mb-2 text-white">Manajemen Kode Promo</h4>
                         <div className="space-y-2">
                         {(localSettings.promoCodes || []).map(promo => (
                             <div key={promo.id} className="grid grid-cols-5 gap-4 items-center p-3 bg-black/20 rounded-lg text-sm">
-                                <span className="font-mono font-bold text-amber-300">{promo.code}</span>
+                                <span className="font-mono font-bold text-yellow-300">{promo.code}</span>
                                 <span>{promo.discountPercent}% ({promo.type})</span>
                                 <span>{promo.currentUses} / {promo.maxUses === 0 ? '∞' : promo.maxUses}</span>
                                 <button onClick={() => onUpdatePromoCode(promo.id, { isActive: !promo.isActive })} className={`px-2 py-1 rounded-full text-xs ${promo.isActive ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>{promo.isActive ? 'Aktif' : 'Nonaktif'}</button>
@@ -148,19 +147,19 @@ const SettingsPanel: React.FC<{
                     <div><label className="block text-sm font-medium text-slate-300 mb-2">Kurs Jual / 1B (User Jual)</label><input type="number" value={localSettings.exchangeRate} onChange={e => handleGenericChange('exchangeRate', parseFloat(e.target.value))} className="input-field" /></div>
                     <div><label className="block text-sm font-medium text-slate-300 mb-2">Kurs Beli / 1B (User Beli)</label><input type="number" value={localSettings.buyRate} onChange={e => handleGenericChange('buyRate', parseFloat(e.target.value))} className="input-field" /></div>
                     <div><label className="block text-sm font-medium text-slate-300 mb-2">ID Game Admin (Tujuan Jual)</label><input type="text" value={localSettings.adminGameId} onChange={e => handleGenericChange('adminGameId', e.target.value)} className="input-field" /></div>
-                    <div className="md:col-span-2"><label className="block text-sm font-medium text-slate-300 mb-2">Pengumuman Ticker</label><textarea value={localSettings.announcement} onChange={e => handleGenericChange('announcement', e.target.value)} rows={2} className="input-field resize-y" /></div>
-                    <div className="flex items-center gap-3"><input type="checkbox" checked={localSettings.maintenanceMode} onChange={e => handleGenericChange('maintenanceMode', e.target.checked)} className="h-5 w-5 rounded bg-slate-900 border-slate-700 text-purple-600 focus:ring-purple-500" /><label className="text-sm font-semibold text-amber-300">Mode Maintenance</label></div>
+                    <div className="md:col-span-2"><label className="block text-sm font-medium text-slate-300 mb-2">Pengumuman Ticker</label><textarea value={localSettings.announcement} onChange={e => handleGenericChange('announcement', e.target.value)} rows={2} className="input-field" /></div>
+                    <div className="flex items-center gap-3"><input id="maintenance" type="checkbox" checked={localSettings.maintenanceMode} onChange={e => handleGenericChange('maintenanceMode', e.target.checked)} className="h-5 w-5 rounded bg-slate-900 border-slate-700 text-purple-600 focus:ring-purple-500" /><label htmlFor="maintenance" className="text-sm font-semibold text-yellow-300">Mode Maintenance</label></div>
                 </div>
             </Accordion>
             
             <Accordion title="Info Pembayaran" icon={<WalletIcon className="w-5 h-5"/>}>
                  <div className="space-y-6">
                     <div>
-                        <div className="flex items-center gap-3 mb-4"><input type="checkbox" checked={localSettings.adminPaymentInfo.paymentMethods.bankTransfer} onChange={e => handleGenericChange('adminPaymentInfo.paymentMethods.bankTransfer', e.target.checked)} className="h-5 w-5 rounded" /><label className="text-sm font-semibold text-slate-200">Aktifkan Pembayaran Bank Transfer</label></div>
+                        <div className="flex items-center gap-3 mb-4"><input id="bank-tf" type="checkbox" checked={localSettings.adminPaymentInfo.paymentMethods.bankTransfer} onChange={e => handleGenericChange('adminPaymentInfo.paymentMethods.bankTransfer', e.target.checked)} className="h-5 w-5 rounded" /><label htmlFor="bank-tf" className="text-sm font-semibold text-slate-200">Aktifkan Pembayaran Bank Transfer</label></div>
                         {localSettings.adminPaymentInfo.paymentMethods.bankTransfer && <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-8 animate-fade-in"><input type="text" placeholder="Nama Bank" value={localSettings.adminPaymentInfo.bankName} onChange={e => handleGenericChange('adminPaymentInfo.bankName', e.target.value)} className="input-field" /><input type="text" placeholder="Nomor Rekening" value={localSettings.adminPaymentInfo.accountNumber} onChange={e => handleGenericChange('adminPaymentInfo.accountNumber', e.target.value)} className="input-field" /><input type="text" placeholder="Nama Pemilik" value={localSettings.adminPaymentInfo.accountName} onChange={e => handleGenericChange('adminPaymentInfo.accountName', e.target.value)} className="input-field" /></div>}
                     </div>
                     <div>
-                        <div className="flex items-center gap-3 mb-4"><input type="checkbox" checked={localSettings.adminPaymentInfo.paymentMethods.qris} onChange={e => handleGenericChange('adminPaymentInfo.paymentMethods.qris', e.target.checked)} className="h-5 w-5 rounded" /><label className="text-sm font-semibold text-slate-200">Aktifkan Pembayaran QRIS</label></div>
+                        <div className="flex items-center gap-3 mb-4"><input id="qris-pm" type="checkbox" checked={localSettings.adminPaymentInfo.paymentMethods.qris} onChange={e => handleGenericChange('adminPaymentInfo.paymentMethods.qris', e.target.checked)} className="h-5 w-5 rounded" /><label htmlFor="qris-pm" className="text-sm font-semibold text-slate-200">Aktifkan Pembayaran QRIS</label></div>
                         {localSettings.adminPaymentInfo.paymentMethods.qris && <div className="pl-8 flex items-center gap-4 animate-fade-in"><input type="file" id="qris-upload" className="hidden" accept="image/*" onChange={handleQrisUpload}/><label htmlFor="qris-upload" className="btn-secondary">Unggah File QRIS</label> {localSettings.adminPaymentInfo.qrisImage && <div className="relative group"><img src={localSettings.adminPaymentInfo.qrisImage} alt="QRIS Preview" className="rounded-lg h-24 w-24 object-cover border border-slate-700"/><button onClick={() => handleGenericChange('adminPaymentInfo.qrisImage', null)} className="absolute -top-2 -right-2 btn-danger-sm"><XCircleIcon className="w-5 h-5"/></button></div>}</div>}
                     </div>
                  </div>
@@ -171,7 +170,7 @@ const SettingsPanel: React.FC<{
                     <p className="text-sm text-slate-400 -mt-2 mb-4">
                         Konfigurasi bot privat yang akan mengirim notifikasi interaktif untuk setiap transaksi baru ke chat Telegram Anda.
                     </p>
-                    <div className="flex items-center gap-3"><input type="checkbox" checked={localSettings.notifications.adminBot.enabled} onChange={e => handleGenericChange('notifications.adminBot.enabled', e.target.checked)} className="h-5 w-5 rounded" /><label className="text-sm font-semibold text-slate-300">Aktifkan Notifikasi Transaksi ke Admin</label></div>
+                    <div className="flex items-center gap-3"><input id="admin-notif" type="checkbox" checked={localSettings.notifications.adminBot.enabled} onChange={e => handleGenericChange('notifications.adminBot.enabled', e.target.checked)} className="h-5 w-5 rounded" /><label htmlFor="admin-notif" className="text-sm font-semibold text-slate-300">Aktifkan Notifikasi Transaksi ke Admin</label></div>
                     {localSettings.notifications.adminBot.enabled && (
                         <div className="space-y-4 animate-fade-in pl-8">
                             <div><label className="block text-sm text-slate-400 mb-1">Token Bot Admin</label><input type="password" value={localSettings.notifications.adminBot.botToken} onChange={e => handleGenericChange('notifications.adminBot.botToken', e.target.value)} className="input-field" placeholder="Token rahasia dari BotFather" /></div>
@@ -189,7 +188,7 @@ const SettingsPanel: React.FC<{
                     <p className="text-sm text-slate-400 -mt-2 mb-4">
                         Konfigurasi bot publik yang dapat digunakan oleh pengguna untuk fitur seperti 'Lacak via Telegram'. Anda hanya perlu mengisi username bot.
                     </p>
-                    <div className="flex items-center gap-3"><input type="checkbox" checked={localSettings.notifications.userBot.enabled} onChange={e => handleGenericChange('notifications.userBot.enabled', e.target.checked)} className="h-5 w-5 rounded" /><label className="text-sm font-semibold text-slate-300">Aktifkan Bot Layanan Pengguna</label></div>
+                    <div className="flex items-center gap-3"><input id="user-bot" type="checkbox" checked={localSettings.notifications.userBot.enabled} onChange={e => handleGenericChange('notifications.userBot.enabled', e.target.checked)} className="h-5 w-5 rounded" /><label htmlFor="user-bot" className="text-sm font-semibold text-slate-300">Aktifkan Bot Layanan Pengguna</label></div>
                     {localSettings.notifications.userBot.enabled && (
                         <div className="space-y-4 animate-fade-in pl-8">
                              <p className="text-xs text-slate-500">Pastikan bot Anda sudah diprogram untuk merespons perintah `/start` dengan parameter ID transaksi.</p>
@@ -201,24 +200,24 @@ const SettingsPanel: React.FC<{
             
             <Accordion title="Fitur Aplikasi" icon={<PowerIcon className="w-5 h-5"/>}>
                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="flex-item-center"><input type="checkbox" checked={localSettings.enabledFeatures.buyChip} onChange={e => handleGenericChange('enabledFeatures.buyChip', e.target.checked)} className="h-5 w-5 rounded" /><label>Fitur Beli Chip</label></div>
-                    <div className="flex-item-center"><input type="checkbox" checked={localSettings.enabledFeatures.sellChip} onChange={e => handleGenericChange('enabledFeatures.sellChip', e.target.checked)} className="h-5 w-5 rounded" /><label>Fitur Jual Chip</label></div>
-                    <div className="flex-item-center"><input type="checkbox" checked={localSettings.enabledFeatures.globalHistory} onChange={e => handleGenericChange('enabledFeatures.globalHistory', e.target.checked)} className="h-5 w-5 rounded" /><label>Riwayat Global</label></div>
-                    <div className="flex-item-center"><input type="checkbox" checked={localSettings.enabledFeatures.providerCarousel} onChange={e => handleGenericChange('enabledFeatures.providerCarousel', e.target.checked)} className="h-5 w-5 rounded" /><label>Carousel Provider</label></div>
+                    <div className="flex-item-center"><input id="feat-buy" type="checkbox" checked={localSettings.enabledFeatures.buyChip} onChange={e => handleGenericChange('enabledFeatures.buyChip', e.target.checked)} className="h-5 w-5 rounded" /><label htmlFor="feat-buy">Fitur Beli Chip</label></div>
+                    <div className="flex-item-center"><input id="feat-sell" type="checkbox" checked={localSettings.enabledFeatures.sellChip} onChange={e => handleGenericChange('enabledFeatures.sellChip', e.target.checked)} className="h-5 w-5 rounded" /><label htmlFor="feat-sell">Fitur Jual Chip</label></div>
+                    <div className="flex-item-center"><input id="feat-history" type="checkbox" checked={localSettings.enabledFeatures.globalHistory} onChange={e => handleGenericChange('enabledFeatures.globalHistory', e.target.checked)} className="h-5 w-5 rounded" /><label htmlFor="feat-history">Riwayat Global</label></div>
+                    <div className="flex-item-center"><input id="feat-carousel" type="checkbox" checked={localSettings.enabledFeatures.providerCarousel} onChange={e => handleGenericChange('enabledFeatures.providerCarousel', e.target.checked)} className="h-5 w-5 rounded" /><label htmlFor="feat-carousel">Carousel Provider</label></div>
                 </div>
             </Accordion>
 
             <Accordion title="Manajemen Mitra" icon={<UserGroupIcon className="w-5 h-5"/>}>
                 <div className="space-y-4">
                     <div>
-                        <h4 className="font-semibold mb-2">Tambah Mitra Baru</h4>
+                        <h4 className="font-semibold mb-2 text-white">Tambah Mitra Baru</h4>
                         <div className="flex gap-2">
                             <input type="text" placeholder="Nama Mitra" value={newPartner.name} onChange={e => setNewPartner({name: e.target.value})} className="input-field flex-grow" />
                             <button onClick={handleAddPartner} className="btn-secondary">Tambah</button>
                         </div>
                     </div>
                     <div>
-                         <h4 className="font-semibold mb-2">Daftar Mitra</h4>
+                         <h4 className="font-semibold mb-2 text-white">Daftar Mitra</h4>
                          <div className="space-y-2">
                              {localSettings.partners.map(partner => (
                                  <div key={partner.id} className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-4 items-center p-3 bg-black/20 rounded-lg text-sm">
@@ -237,27 +236,24 @@ const SettingsPanel: React.FC<{
             </Accordion>
 
             <Accordion title="Pengaturan Live Chat" icon={<ChatBubbleLeftRightIcon className="w-5 h-5"/>}>
-                <div className="flex items-center gap-3 mb-6"><input type="checkbox" checked={localSettings.chatSettings.enabled} onChange={e => handleGenericChange('chatSettings.enabled', e.target.checked)} className="h-5 w-5 rounded" /><label className="text-sm font-semibold text-slate-200">Aktifkan Live Chat</label></div>
-                {localSettings.chatSettings.enabled && <div className="space-y-4 animate-fade-in pl-8"><div><label className="block text-sm text-slate-400 mb-1">Nama Agen</label><input type="text" value={localSettings.chatSettings.agentName} onChange={e => handleGenericChange('chatSettings.agentName', e.target.value)} className="input-field" /></div><div><label className="block text-sm text-slate-400 mb-1">Pesan Selamat Datang</label><textarea value={localSettings.chatSettings.welcomeMessage} onChange={e => handleGenericChange('chatSettings.welcomeMessage', e.target.value)} rows={3} className="input-field resize-y" /></div></div>}
+                <div className="flex items-center gap-3 mb-6"><input id="live-chat" type="checkbox" checked={localSettings.chatSettings.enabled} onChange={e => handleGenericChange('chatSettings.enabled', e.target.checked)} className="h-5 w-5 rounded" /><label htmlFor="live-chat" className="text-sm font-semibold text-slate-200">Aktifkan Live Chat</label></div>
+                {localSettings.chatSettings.enabled && <div className="space-y-4 animate-fade-in pl-8"><div><label className="block text-sm text-slate-400 mb-1">Nama Agen</label><input type="text" value={localSettings.chatSettings.agentName} onChange={e => handleGenericChange('chatSettings.agentName', e.target.value)} className="input-field" /></div><div><label className="block text-sm text-slate-400 mb-1">Pesan Selamat Datang</label><textarea value={localSettings.chatSettings.welcomeMessage} onChange={e => handleGenericChange('chatSettings.welcomeMessage', e.target.value)} rows={3} className="input-field" /></div></div>}
             </Accordion>
 
             <Accordion title="Keamanan" icon={<ShieldCheckIcon className="w-5 h-5"/>}>
                 <div className="grid md:grid-cols-2 gap-6 items-start">
-                    <div><h4 className="font-semibold mb-2">Ubah PIN Admin</h4><div className="space-y-3"><input type="password" placeholder="PIN Baru" value={newPin} onChange={e => setNewPin(e.target.value)} className="input-field" /><input type="password" placeholder="Konfirmasi PIN Baru" value={confirmPin} onChange={e => setConfirmPin(e.target.value)} className="input-field" /><button onClick={handlePinUpdate} className="btn-secondary w-full">Ubah PIN</button></div></div>
-                    <div><h4 className="font-semibold mb-2">Reset PIN</h4><p className="text-sm text-slate-400 mb-3">Aksi ini akan mengembalikan PIN ke default ({DEFAULT_ADMIN_PIN}).</p><button onClick={onPinReset} className="btn-danger w-full">Reset PIN ke Default</button></div>
+                    <div><h4 className="font-semibold mb-2 text-white">Ubah PIN Admin</h4><div className="space-y-3"><input type="password" placeholder="PIN Baru" value={newPin} onChange={e => setNewPin(e.target.value)} className="input-field" /><input type="password" placeholder="Konfirmasi PIN Baru" value={confirmPin} onChange={e => setConfirmPin(e.target.value)} className="input-field" /><button onClick={handlePinUpdate} className="btn-secondary w-full">Ubah PIN</button></div></div>
+                    <div><h4 className="font-semibold mb-2 text-white">Reset PIN</h4><p className="text-sm text-slate-400 mb-3">Aksi ini akan mengembalikan PIN ke default ({DEFAULT_ADMIN_PIN}).</p><button onClick={onPinReset} className="btn-danger w-full">Reset PIN ke Default</button></div>
                 </div>
             </Accordion>
 
              <div className="flex justify-end mt-8">
-                <button onClick={onSave} className="btn-shimmer w-full md:w-auto py-3 px-8 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-lg flex items-center justify-center gap-2">
+                <button onClick={onSave} className="btn-primary btn-shimmer w-full md:w-auto text-lg flex items-center justify-center gap-2">
                    <ArrowDownOnSquareIcon className="w-6 h-6"/> Simpan Semua Pengaturan
                 </button>
              </div>
              <style>{`
-                .input-field { width: 100%; background-color: rgba(0,0,0,0.3); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.875rem; }
-                .input-field-sm { width: 100%; background-color: rgba(0,0,0,0.5); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 0.375rem; padding: 0.25rem 0.5rem; font-size: 0.875rem; }
-                .btn-secondary { padding: 0.5rem 1rem; background-color: rgba(55, 65, 81, 0.5); border: 1px solid rgb(71 85 105); border-radius: 0.5rem; font-size: 0.875rem; cursor: pointer; transition: background-color 0.2s; }
-                .btn-secondary:hover { background-color: rgba(71, 85, 105, 0.7); }
+                .input-field-sm { width: 100%; background-color: rgba(0,0,0,0.5); border: 1px solid rgba(147, 51, 234, 0.2); border-radius: 0.375rem; padding: 0.25rem 0.5rem; font-size: 0.875rem; }
                 .btn-danger { padding: 0.5rem 1rem; background-color: rgba(220, 38, 38, 0.8); border-radius: 0.5rem; font-size: 0.875rem; cursor: pointer; transition: background-color 0.2s; color: white; }
                 .btn-danger:hover { background-color: rgba(220, 38, 38, 1); }
                 .btn-danger-sm { background-color: rgba(220, 38, 38, 0.9); color: white; border-radius: 9999px; padding: 0.125rem; opacity: 0; transition: opacity 0.2s; }
@@ -294,7 +290,7 @@ const TransactionPanel: React.FC = () => {
     return (
         <div className="glass-pane p-6 rounded-2xl">
             <h2 className="text-2xl font-bold mb-4 text-purple-300">Daftar Transaksi</h2>
-            <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 border-b border-purple-500/10 pb-4">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 mb-4 border-b border-[var(--border-color)] pb-4">
                 <div className="flex gap-2 items-center"><span className="text-sm font-semibold text-slate-400">Status:</span>{Object.values(TransactionStatus).map(s => <button key={s} onClick={()=>setStatusFilter(s)} className={`px-3 py-1 text-xs rounded-full ${statusFilter === s ? 'bg-purple-600 text-white' : 'bg-slate-800 hover:bg-slate-700'}`}>{s}</button>)}<button onClick={()=>setStatusFilter('ALL')} className={`px-3 py-1 text-xs rounded-full ${statusFilter === 'ALL' ? 'bg-purple-600 text-white' : 'bg-slate-800 hover:bg-slate-700'}`}>Semua</button></div>
                 <div className="flex gap-2 items-center"><span className="text-sm font-semibold text-slate-400">Tipe:</span><button onClick={()=>setTypeFilter('SELL')} className={`px-3 py-1 text-xs rounded-full ${typeFilter === 'SELL' ? 'bg-purple-600 text-white' : 'bg-slate-800 hover:bg-slate-700'}`}>Jual</button><button onClick={()=>setTypeFilter('BUY')} className={`px-3 py-1 text-xs rounded-full ${typeFilter === 'BUY' ? 'bg-purple-600 text-white' : 'bg-slate-800 hover:bg-slate-700'}`}>Beli</button><button onClick={()=>setTypeFilter('ALL')} className={`px-3 py-1 text-xs rounded-full ${typeFilter === 'ALL' ? 'bg-purple-600 text-white' : 'bg-slate-800 hover:bg-slate-700'}`}>Semua</button></div>
             </div>
@@ -303,8 +299,8 @@ const TransactionPanel: React.FC = () => {
             </table>{filteredTransactions.length === 0 && <p className="text-center py-8 text-slate-500">Tidak ada transaksi yang cocok.</p>}</div>
             {selectedTx && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-50 p-4" onClick={() => setSelectedTx(null)}>
-                    <div className="glass-pane rounded-2xl w-full max-w-2xl p-6 space-y-4 animate-fade-in-up" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-start"><h3 className="text-xl font-bold text-purple-300">Detail Transaksi <span className="font-mono text-amber-400">{selectedTx.id}</span></h3><button onClick={() => setSelectedTx(null)} className="text-slate-500 hover:text-white transition-colors text-2xl">&times;</button></div>
+                    <div className="glass-pane rounded-2xl w-full max-w-2xl p-6 space-y-4 animate-slide-in-up" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-start"><h3 className="text-xl font-bold text-purple-300">Detail Transaksi <span className="font-mono text-yellow-400">{selectedTx.id}</span></h3><button onClick={() => setSelectedTx(null)} className="text-slate-500 hover:text-white transition-colors text-2xl">&times;</button></div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div><h4 className="font-semibold text-slate-300 border-b border-slate-700 pb-2 mb-4">Bukti Transfer</h4><a href={selectedTx.proofImage} target="_blank" rel="noopener noreferrer"><img src={selectedTx.proofImage} alt="Bukti" className="rounded-lg w-full border-2 border-slate-700 hover:border-purple-500 transition-colors" /></a></div>
                             <div><h4 className="font-semibold text-slate-300 border-b border-slate-700 pb-2 mb-4">Info Transaksi</h4><div className="text-sm space-y-2">
@@ -386,8 +382,8 @@ const ChatPanel: React.FC = () => {
 
     return (
         <div className="glass-pane rounded-2xl flex h-[75vh]">
-            <div className="w-1/3 border-r border-purple-500/10 flex flex-col">
-                <h2 className="text-xl font-bold p-4 border-b border-purple-500/10 text-purple-300">Sesi Chat</h2>
+            <div className="w-1/3 border-r border-[var(--border-color)] flex flex-col">
+                <h2 className="text-xl font-bold p-4 border-b border-[var(--border-color)] text-purple-300">Sesi Chat</h2>
                 <div className="flex-1 overflow-y-auto">
                     {chatSessions.map(({ gameId, lastMessage }) => (
                         <button 
@@ -405,14 +401,14 @@ const ChatPanel: React.FC = () => {
             <div className="w-2/3 flex flex-col">
                 {selectedGameId && chatLogs[selectedGameId] ? (
                     <>
-                        <div className="p-4 border-b border-purple-500/10">
-                            <h3 className="font-bold text-lg text-white">Percakapan dengan: <span className="font-mono text-amber-300">{selectedGameId}</span></h3>
+                        <div className="p-4 border-b border-[var(--border-color)]">
+                            <h3 className="font-bold text-lg text-white">Percakapan dengan: <span className="font-mono text-yellow-300">{selectedGameId}</span></h3>
                         </div>
                         <div className="flex-1 p-4 space-y-4 overflow-y-auto">
                             {chatLogs[selectedGameId].map(msg => <MessageBubble key={msg.id} msg={msg} />)}
                             <div ref={messagesEndRef} />
                         </div>
-                        <form onSubmit={handleReply} className="p-3 bg-black/30 border-t border-purple-500/20">
+                        <form onSubmit={handleReply} className="p-3 bg-black/30 border-t border-[var(--border-color)]">
                             <div className="flex items-center gap-2">
                                 <input
                                     type="text"
@@ -441,30 +437,44 @@ const ChatPanel: React.FC = () => {
 
 const AnimatedNumber: React.FC<{ value: number; isCurrency?: boolean }> = ({ value, isCurrency = false }) => {
     const [displayValue, setDisplayValue] = useState(0);
+    const ref = useRef<HTMLSpanElement>(null);
 
     useEffect(() => {
-        let start = 0;
-        const end = value;
-        if (end === 0) { setDisplayValue(0); return; }
-        const duration = 1500;
-        const increment = end / (duration / 15);
-        
-        const counter = setInterval(() => {
-            start += increment;
-            if (start > end) {
-                start = end;
-                clearInterval(counter);
-            }
-            setDisplayValue(start);
-        }, 15);
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    let start = 0;
+                    const end = value;
+                    if (end === 0) { setDisplayValue(0); return; }
+                    const duration = 1500;
+                    const increment = end / (duration / 15);
+                    
+                    const counter = setInterval(() => {
+                        start += increment;
+                        if (start >= end) {
+                            start = end;
+                            clearInterval(counter);
+                        }
+                        setDisplayValue(start);
+                    }, 15);
+                    observer.disconnect();
+                }
+            },
+            { threshold: 0.1 }
+        );
 
-        return () => clearInterval(counter);
+        if(ref.current) {
+            observer.observe(ref.current);
+        }
+
+        return () => observer.disconnect();
     }, [value]);
     
-    if (isCurrency) {
-        return <>{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits:0 }).format(displayValue)}</>;
-    }
-    return <>{Math.round(displayValue).toLocaleString('id-ID')}</>;
+    const formattedValue = isCurrency 
+        ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits:0 }).format(displayValue)
+        : Math.round(displayValue).toLocaleString('id-ID');
+
+    return <span ref={ref}>{formattedValue}</span>;
 };
 
 const TransactionChart: React.FC = () => {
@@ -493,7 +503,7 @@ const TransactionChart: React.FC = () => {
         return last7Days;
     }, [transactions]);
     
-    const maxVal = Math.max(...data.map(d => Math.max(d.buy, d.sell)));
+    const maxVal = Math.max(...data.map(d => Math.max(d.buy, d.sell)), 1); // Avoid division by zero
 
     return (
         <div className="glass-pane p-6 rounded-2xl col-span-1 lg:col-span-2">
@@ -502,9 +512,9 @@ const TransactionChart: React.FC = () => {
                 {data.map((d, i) => (
                     <div key={i} className="flex-1 flex flex-col items-center justify-end h-full gap-1 group">
                          <div className="relative w-full h-full flex items-end justify-center gap-1">
-                            <div className="w-1/2 bg-green-500/20 rounded-t-md" style={{ height: `${maxVal > 0 ? (d.buy / maxVal) * 100 : 0}%` }}/>
-                            <div className="w-1/2 bg-purple-500/20 rounded-t-md" style={{ height: `${maxVal > 0 ? (d.sell / maxVal) * 100 : 0}%` }}/>
-                             <div className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 p-2 rounded-lg text-xs w-max pointer-events-none shadow-lg">
+                            <div className="w-1/2 bg-green-500/20 rounded-t-md hover:bg-green-500/40 transition-colors" style={{ height: `${(d.buy / maxVal) * 100}%` }}/>
+                            <div className="w-1/2 bg-purple-500/20 rounded-t-md hover:bg-purple-500/40 transition-colors" style={{ height: `${(d.sell / maxVal) * 100}%` }}/>
+                             <div className="absolute -top-12 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 p-2 rounded-lg text-xs w-max pointer-events-none shadow-lg z-10">
                                  <p className="text-green-400 font-bold">Beli: {new Intl.NumberFormat('id-ID').format(d.buy)}</p>
                                  <p className="text-purple-400 font-bold">Jual: {new Intl.NumberFormat('id-ID').format(d.sell)}</p>
                              </div>
@@ -579,11 +589,11 @@ const TopSpenders: React.FC = () => {
 }
 
 const SummaryCard: React.FC<{icon: React.ReactNode, title: string, value: number, isCurrency?: boolean, suffix?: string, color: string}> = ({icon, title, value, isCurrency, suffix, color}) => (
-    <div className="glass-pane p-5 rounded-xl flex items-center gap-5 transition-all hover:border-purple-500/50 hover:shadow-purple-500/10">
+    <div className="glass-pane p-5 rounded-xl flex items-center gap-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-purple-500/10">
         <div className={`p-3 rounded-full bg-slate-900/50 ${color}`}>{icon}</div>
         <div>
             <h3 className="text-sm font-medium text-slate-400">{title}</h3>
-            <p className={`text-2xl font-bold ${color} mt-1`}>{suffix ? suffix : <AnimatedNumber value={value} isCurrency={isCurrency} />}</p>
+            <div className={`text-2xl font-bold ${color} mt-1`}>{suffix ? suffix : <AnimatedNumber value={value} isCurrency={isCurrency} />}</div>
         </div>
     </div>
 );
@@ -663,7 +673,7 @@ const AdminPanel: React.FC = () => {
                      <div className="space-y-6 animate-fade-in">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <SummaryCard icon={<CurrencyDollarIcon className="w-7 h-7"/>} title="Total Pendapatan (Beli)" value={summaryStats.totalRevenue} isCurrency color="text-green-400" />
-                            <SummaryCard icon={<BanknotesIcon className="w-7 h-7"/>} title="Total Pembayaran (Jual)" value={summaryStats.totalPayout} isCurrency color="text-amber-400" />
+                            <SummaryCard icon={<BanknotesIcon className="w-7 h-7"/>} title="Total Pembayaran (Jual)" value={summaryStats.totalPayout} isCurrency color="text-yellow-400" />
                             <SummaryCard icon={<CalendarDaysIcon className="w-7 h-7"/>} title="Transaksi Selesai Hari Ini" value={summaryStats.completedToday} color="text-blue-400" />
                             <SummaryCard icon={<ClockIcon className="w-7 h-7"/>} title="Waktu Proses Rata-Rata" value={0} suffix={summaryStats.avgProcessingTimeFormatted} color="text-purple-400" />
                         </div>
@@ -696,14 +706,15 @@ const AdminPanel: React.FC = () => {
     }
 
     const NavButton: React.FC<{tab: AdminTab; icon: React.ReactNode; label: string}> = ({tab, icon, label}) => (
-        <button onClick={() => setActiveTab(tab)} className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${activeTab === tab ? 'bg-purple-600 text-white shadow-[0_0_10px_theme(colors.purple.500)]' : 'text-slate-300 hover:bg-purple-500/10'}`}>
+        <button onClick={() => setActiveTab(tab)} className={`relative flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${activeTab === tab ? 'text-white' : 'text-slate-300 hover:bg-purple-500/10 hover:text-white'}`}>
+            {activeTab === tab && <div className="absolute inset-0 bg-purple-600 rounded-lg shadow-[0_0_15px_var(--primary-glow)] -z-10 animate-fade-in" style={{animationDuration: '0.3s'}}></div>}
             {icon}
             {label}
         </button>
     );
 
     return (
-        <div className="space-y-8 animate-fade-in-up">
+        <div className="space-y-8 animate-slide-in-up">
             <div className="glass-pane p-2 rounded-xl flex flex-wrap gap-2">
                 <NavButton tab="dashboard" icon={<ChartBarIcon className="w-5 h-5"/>} label="Dashboard" />
                 <NavButton tab="transactions" icon={<BuildingLibraryIcon className="w-5 h-5"/>} label="Transaksi" />

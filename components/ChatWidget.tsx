@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { ChatBubbleLeftRightIcon, XMarkIcon, PaperAirplaneIcon, UserCircleIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
@@ -77,7 +76,7 @@ const ChatWidget: React.FC = () => {
                 transition-all duration-300 ease-in-out
                 ${isOpen ? 'w-[calc(100vw-2rem)] max-w-sm h-[60vh] opacity-100' : 'w-0 h-0 opacity-0 pointer-events-none'}
             `}>
-                <div className="flex-shrink-0 p-4 bg-black/30 border-b border-purple-500/20 flex justify-between items-center">
+                <div className="flex-shrink-0 p-4 bg-black/30 border-b border-[var(--border-color)] flex justify-between items-center">
                     <div>
                         <h3 className="font-bold text-white">{step === 'chat' ? `Chat (${gameId})` : agentName}</h3>
                         <p className="text-xs text-green-400">Online</p>
@@ -100,10 +99,10 @@ const ChatWidget: React.FC = () => {
                                     value={gameId}
                                     onChange={(e) => setGameId(e.target.value)}
                                     placeholder="Masukkan ID Game Anda"
-                                    className="w-full pl-10 pr-4 py-3 bg-slate-900/50 border border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                                    className="input-field pl-10"
                                 />
                             </div>
-                            <button type="submit" className="w-full flex justify-center items-center gap-2 py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg shadow-lg transition-all disabled:bg-slate-600" disabled={!gameId.trim()}>
+                            <button type="submit" className="btn-primary w-full flex justify-center items-center gap-2" disabled={!gameId.trim()}>
                                 Mulai Chat <ArrowRightIcon className="w-4 h-4" />
                             </button>
                         </form>
@@ -131,7 +130,7 @@ const ChatWidget: React.FC = () => {
                             <div ref={messagesEndRef} />
                         </div>
                         
-                        <form onSubmit={handleSendMessage} className="flex-shrink-0 p-3 bg-black/30 border-t border-purple-500/20">
+                        <form onSubmit={handleSendMessage} className="flex-shrink-0 p-3 bg-black/30 border-t border-[var(--border-color)]">
                             <div className="flex items-center gap-2">
                                 <input
                                     type="text"
@@ -155,7 +154,7 @@ const ChatWidget: React.FC = () => {
                 className={`
                     absolute bottom-0 right-0 p-4 rounded-full text-white shadow-2xl 
                     transition-all duration-300 ease-in-out transform hover:scale-110 
-                    ${isOpen ? 'bg-red-600 opacity-0 pointer-events-none' : 'bg-gradient-to-br from-purple-500 to-amber-500'}
+                    ${isOpen ? 'bg-red-600 opacity-0 pointer-events-none' : 'bg-gradient-to-br from-purple-500 to-yellow-500'}
                 `}
                 aria-label="Buka Live Chat"
             >
