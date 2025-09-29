@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Royal Play | Platform Jual Beli Chip #1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg-color: #0c0a18;
+        --primary-glow: #a855f7; /* purple-500 */
+        --secondary-glow: #f59e0b; /* amber-500 */
+        --gold-color: #FFD700;
+      }
+      body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--bg-color);
+        overflow-x: hidden;
+      }
+      #root::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(168, 85, 247, 0.15), transparent),
+          radial-gradient(ellipse 80% 50% at 50% 120%, rgba(245, 158, 11, 0.1), transparent);
+        z-index: -2;
+        pointer-events: none;
+      }
+      
+      /* --- Animated Background --- */
+      .bg-animation-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: -1;
+      }
+      .particle {
+        position: absolute;
+        border-radius: 50%;
+        background: var(--gold-color);
+        opacity: 0;
+        animation: rise 10s infinite linear;
+      }
+      @keyframes rise {
+        0% { transform: translateY(100vh) scale(0); opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+      }
+      .falling-icon {
+        position: absolute;
+        opacity: 0.1;
+        animation: fall 20s infinite linear;
+        background-size: contain;
+        background-repeat: no-repeat;
+      }
+      @keyframes fall {
+        0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
+        10% { opacity: 0.1; }
+        90% { opacity: 0.1; }
+        100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+      }
+      
+      /* --- General Animations --- */
+      @keyframes shake {
+        10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); }
+        30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); }
+      }
+      .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+      @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(20px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      .animate-fade-in-up { animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      
+      /* Glassmorphism & Glow */
+      .glass-pane {
+        background: rgba(12, 10, 24, 0.5);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 8px 32px 0 rgba(168, 85, 247, 0.1);
+      }
+
+      /* Shimmer Effect */
+      .btn-shimmer {
+        position: relative;
+        overflow: hidden;
+      }
+      .btn-shimmer::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 60%);
+        transform: rotate(45deg);
+        opacity: 0;
+        transition: opacity 0.5s, left 0.5s;
+        pointer-events: none;
+      }
+      .btn-shimmer:hover::after {
+        opacity: 1;
+        left: 50%;
+      }
+
+      /* Scrollbar Styles */
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #1a1a2e; }
+      ::-webkit-scrollbar-thumb { background: #4a4a6a; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #6a6a8a; }
+
+      /* Game Provider Carousel */
+      .carousel-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        overflow: hidden;
+        -webkit-mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+        mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+      }
+      .carousel-track {
+        display: flex;
+        animation: scroll 40s linear infinite;
+      }
+      .carousel-item {
+        flex-shrink: 0;
+        width: 150px;
+        padding: 0 20px;
+        filter: grayscale(100%) brightness(0.7);
+        transition: filter 0.3s;
+      }
+      .carousel-item:hover {
+        filter: grayscale(0%) brightness(1);
+      }
+      @keyframes scroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://aistudiocdn.com/react@^19.1.1",
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+        "react/": "https://aistudiocdn.com/react@^19.1.1/",
+        "@heroicons/react/": "https://aistudiocdn.com/@heroicons/react@^2.2.0/"
+      }
+    }
+    </script>
+  </head>
+  <body class="text-gray-300">
+    <div class="bg-animation-wrapper" id="bg-animation"></div>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+    <script>
+      // Script for animated background
+      const animationContainer = document.getElementById('bg-animation');
+      const particleCount = 20;
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        const size = Math.random() * 3 + 1;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${Math.random() * 100}vw`;
+        particle.style.animationDelay = `${Math.random() * 10}s`;
+        particle.style.animationDuration = `${Math.random() * 5 + 5}s`;
+        animationContainer.appendChild(particle);
+      }
+
+      const icons = [
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRDcwMCI+PHBhdGggZD0iTTEyIDFsMyA3aDdsLTUgNCAyIDctNS00LTUtNCAyLTctNSA0aDd6Ii8+PC9zdmc+', // star
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRDcwMCI+PHBhdGggZD0iTTEyIDIxLjM1bC0xLjQ1LTEuMzJDNS40IDQuMzYgMiA3LjU1IDIgMTIuNWMwIDMuMDggMS43MSA1Ljg0IDQuMzYgNy4xOUwxMiAyMS4zNXoiLz48L3N2Zz4=', // heart (placeholder)
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRDcwMCI+PHBhdGggZD0iTTEyIDJDNi40OCA MiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHoiLz48L3N2Zz4=', // coin
+        'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI0ZGRDcwMCI+PHBhdGggZD0iTTEyIDFsLTIuNSA2SDIgOGw0LjUgMy41TDQgMjFsNS0zLjUgNSAzLjVMOCAxMS41IDQgOHoiLz48L3N2Zz4=' // crown (placeholder)
+      ];
+      const iconCount = 15;
+      for (let i = 0; i < iconCount; i++) {
+        const icon = document.createElement('div');
+        icon.className = 'falling-icon';
+        const size = Math.random() * 30 + 20;
+        icon.style.width = `${size}px`;
+        icon.style.height = `${size}px`;
+        icon.style.left = `${Math.random() * 100}vw`;
+        icon.style.animationDelay = `${Math.random() * 20}s`;
+        icon.style.animationDuration = `${Math.random() * 10 + 15}s`;
+        icon.style.backgroundImage = `url('${icons[i % icons.length]}')`;
+        animationContainer.appendChild(icon);
+      }
+    </script>
+  </body>
+</html>
