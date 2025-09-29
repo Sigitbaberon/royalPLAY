@@ -3,12 +3,10 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { DataProvider, useData } from './context/DataContext';
 import AdminPanel from './components/AdminPanel';
 import UserView from './components/UserView';
-import { LockClosedIcon, UserIcon, SpeakerWaveIcon, SpeakerXMarkIcon, WrenchScrewdriverIcon, StarIcon, ChatBubbleLeftRightIcon, UserGroupIcon } from '@heroicons/react/24/solid';
+import { LockClosedIcon, UserIcon, WrenchScrewdriverIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/solid';
 import ToastContainer from './components/ToastContainer';
 import AdminPinModal from './components/AdminPinModal';
-import VipModal from './components/VipModal';
 import ChatWidget from './components/ChatWidget';
-import AffiliateModal from './components/AffiliateModal'; // Import AffiliateModal
 
 type View = 'user' | 'admin';
 
@@ -108,21 +106,9 @@ const MaintenanceView: React.FC = () => (
 const AppContent: React.FC = () => {
     const [view, setView] = useState<View>('user');
     const [isPinModalOpen, setPinModalOpen] = useState(false);
-    const [isVipModalOpen, setVipModalOpen] = useState(false);
-    const [isAffiliateModalOpen, setAffiliateModalOpen] = useState(false); // New state for Affiliate Modal
-    const [isMuted, setIsMuted] = useState(true);
     const { settings } = useData();
 
     const { appName, appLogoSvg } = settings.branding;
-
-    // Effect to capture referral code from URL
-    useEffect(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const refCode = urlParams.get('ref');
-        if (refCode) {
-            sessionStorage.setItem('referrerId', refCode);
-        }
-    }, []);
 
     useEffect(() => {
         document.title = `${appName} | Platform Jual Beli Chip #1`;
@@ -196,27 +182,7 @@ const AppContent: React.FC = () => {
                         )}
                     </div>
                     <div className="flex items-center gap-4">
-                        {settings.affiliateSystem.enabled && view === 'user' && (
-                             <button
-                                onClick={() => setAffiliateModalOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-lg text-sm font-semibold transition-all text-green-300 hover:text-white hover:border-green-500/70 btn-shimmer"
-                            >
-                                <UserGroupIcon className="h-4 w-4" />
-                                Afiliasi
-                            </button>
-                        )}
-                        {settings.vipSystem.enabled && view === 'user' && (
-                             <button
-                                onClick={() => setVipModalOpen(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-sm font-semibold transition-all text-amber-300 hover:text-white hover:border-amber-500/70 btn-shimmer"
-                            >
-                                <StarIcon className="h-4 w-4" />
-                                VIP Status
-                            </button>
-                        )}
-                        <button onClick={() => setIsMuted(!isMuted)} className="p-2 text-slate-400 hover:text-white transition-colors">
-                            {isMuted ? <SpeakerXMarkIcon className="h-5 w-5" /> : <SpeakerWaveIcon className="h-5 w-5" />}
-                        </button>
+                        {/* VIP, Affiliate, and Speaker buttons removed */}
                     </div>
                 </nav>
                  <LiveRateTicker announcement={settings.announcement} />
@@ -237,14 +203,6 @@ const AppContent: React.FC = () => {
                 isOpen={isPinModalOpen}
                 onClose={() => setPinModalOpen(false)}
                 onSuccess={handlePinSuccess}
-            />
-            <VipModal 
-                isOpen={isVipModalOpen}
-                onClose={() => setVipModalOpen(false)}
-            />
-            <AffiliateModal 
-                isOpen={isAffiliateModalOpen}
-                onClose={() => setAffiliateModalOpen(false)}
             />
             {view === 'user' && settings.chatSettings.enabled && <ChatWidget />}
         </div>

@@ -1,7 +1,8 @@
+
 import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
-import { Transaction, AdminSettings, TransactionStatus, DataContextType, ToastMessage, ToastType, PaymentMethod, AddTransactionData, TransactionType, VipTier, PromoCode, Partner, ChatMessage, AffiliateData, Commission } from '../types';
-import { CHIP_UNIT, INDONESIAN_BANKS, INDONESIAN_EWALLETS, anonymizeId, CHIP_PACKAGES, DEFAULT_ADMIN_PIN, VIP_TIER_ICONS } from '../constants';
+import { Transaction, AdminSettings, TransactionStatus, DataContextType, ToastMessage, ToastType, PaymentMethod, AddTransactionData, TransactionType, PromoCode, Partner, ChatMessage, VipTier, VipStatus, AffiliateStats, AffiliateCommission } from '../types';
+import { CHIP_UNIT, INDONESIAN_BANKS, INDONESIAN_EWALLETS, anonymizeId, CHIP_PACKAGES, DEFAULT_ADMIN_PIN } from '../constants';
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
@@ -38,6 +39,16 @@ const defaultPartners: Partner[] = [
     { id: 'p-nvidia', name: 'NVIDIA', logoUrl: null },
 ];
 
+// FIX: Added default settings for VIP System
+const trophyIcon = (color: string) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" class="w-8 h-8"><path fill-rule="evenodd" d="M5.166 2.072A.75.75 0 0 1 6 .75h12A.75.75 0 0 1 18.834 2.072l-4.25 4.25a.75.75 0 0 1-1.06 0l-1.47-1.47a.75.75 0 0 0-1.06 0l-1.47 1.47a.75.75 0 0 1-1.06 0l-4.25-4.25Zm.848 5.428 4.25 4.25a.75.75 0 0 0 1.06 0l1.47-1.47a.75.75 0 0 1 1.06 0l1.47 1.47a.75.75 0 0 0 1.06 0l4.25-4.25a.75.75 0 0 1 1.06 1.06l-4.25 4.25a.75.75 0 0 0 0 1.06l4.25 4.25a.75.75 0 0 1-1.06 1.06l-4.25-4.25a.75.75 0 0 0-1.06 0l-1.47 1.47a.75.75 0 0 1-1.06 0l-1.47-1.47a.75.75 0 0 0-1.06 0l-4.25 4.25a.75.75 0 0 1-1.06-1.06l4.25-4.25a.75.75 0 0 0 0-1.06L4.106 8.56a.75.75 0 0 1 1.06-1.06Z" clip-rule="evenodd" /></svg>`;
+
+const defaultVipTiers: VipTier[] = [
+    { name: 'Bronze', threshold: 0, icon: trophyIcon('#cd7f32'), buyRateBonus: 0, sellRateBonus: 0.5 },
+    { name: 'Silver', threshold: 1000000, icon: trophyIcon('#c0c0c0'), buyRateBonus: 0.5, sellRateBonus: 1 },
+    { name: 'Gold', threshold: 5000000, icon: trophyIcon('#ffd700'), buyRateBonus: 1, sellRateBonus: 1.5 },
+    { name: 'Platinum', threshold: 20000000, icon: trophyIcon('#e5e4e2'), buyRateBonus: 1.5, sellRateBonus: 2 },
+];
+
 const defaultSettings: AdminSettings = {
     adminPin: DEFAULT_ADMIN_PIN,
     branding: {
@@ -57,16 +68,6 @@ const defaultSettings: AdminSettings = {
     maintenanceMode: false,
     announcement: "Selamat Datang di Raxnet Store!",
     enabledFeatures: { sellChip: true, buyChip: true, globalHistory: true, providerCarousel: true, },
-    vipSystem: {
-        enabled: true,
-        tiers: [
-            { name: "Bronze", threshold: 0, buyRateBonus: 0, sellRateBonus: 0, icon: VIP_TIER_ICONS.bronze },
-            { name: "Silver", threshold: 5000000, buyRateBonus: 0.5, sellRateBonus: 0.5, icon: VIP_TIER_ICONS.silver },
-            { name: "Gold", threshold: 25000000, buyRateBonus: 1, sellRateBonus: 1, icon: VIP_TIER_ICONS.gold },
-            { name: "Platinum", threshold: 100000000, buyRateBonus: 1.5, sellRateBonus: 2, icon: VIP_TIER_ICONS.platinum },
-            { name: "Diamond", threshold: 500000000, buyRateBonus: 2, sellRateBonus: 3, icon: VIP_TIER_ICONS.diamond },
-        ]
-    },
     notifications: {
         telegram: { enabled: false, botToken: "", chatId: "" }
     },
@@ -77,10 +78,14 @@ const defaultSettings: AdminSettings = {
         agentName: "CS Raxnet",
         welcomeMessage: "Halo! Ada yang bisa kami bantu? Silakan ketik pertanyaan Anda di sini.",
     },
+    // FIX: Added default settings for VIP and Affiliate systems.
+    vipSystem: {
+        enabled: true,
+        tiers: defaultVipTiers,
+    },
     affiliateSystem: {
         enabled: true,
-        commissionRate: 1.0, // 1% commission
-        minPayout: 50000, // Rp 50.000
+        commissionRate: 5, // 5%
     },
 };
 
@@ -129,7 +134,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
     const [settings, setSettings] = useLocalStorage<AdminSettings>('settings', defaultSettings);
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
-    const [affiliateData, setAffiliateData] = useLocalStorage<AffiliateData>('affiliateData', {});
     
     // For user's current session
     const [chatHistory, setChatHistory] = useLocalStorage<ChatMessage[]>('raxnet-chat-session', []);
@@ -206,7 +210,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 branding: { ...prev.branding, ...(newSettings.branding || {})},
                 adminPaymentInfo: { ...prev.adminPaymentInfo, ...(newSettings.adminPaymentInfo || {}), paymentMethods: { ...prev.adminPaymentInfo.paymentMethods, ...(newSettings.adminPaymentInfo?.paymentMethods || {}) } },
                 enabledFeatures: { ...prev.enabledFeatures, ...(newSettings.enabledFeatures || {}), },
-                vipSystem: { ...prev.vipSystem, ...(newSettings.vipSystem || {})},
                 notifications: {
                     ...prev.notifications,
                     telegram: { ...prev.notifications.telegram, ...(newSettings.notifications?.telegram || {}) }
@@ -214,6 +217,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 promoCodes: newSettings.promoCodes || prev.promoCodes,
                 partners: newSettings.partners || prev.partners,
                 chatSettings: { ...prev.chatSettings, ...(newSettings.chatSettings || {}) },
+                // FIX: Correctly merge nested VIP and Affiliate settings
+                vipSystem: { ...prev.vipSystem, ...(newSettings.vipSystem || {}), tiers: newSettings.vipSystem?.tiers || prev.vipSystem.tiers },
                 affiliateSystem: { ...prev.affiliateSystem, ...(newSettings.affiliateSystem || {}) },
             };
             return merged;
@@ -229,22 +234,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         showToast("PIN berhasil diperbarui.", "success");
         return true;
     }
-
-    const getUserVipStatus = useCallback((gameId: string) => {
-        const userTransactions = transactions.filter(tx => tx.destinationId === gameId && tx.status === TransactionStatus.PAID);
-        const totalVolume = userTransactions.reduce((sum, tx) => sum + tx.moneyValue, 0);
-
-        const sortedTiers = [...settings.vipSystem.tiers].sort((a,b) => b.threshold - a.threshold);
-        const currentTier = sortedTiers.find(tier => totalVolume >= tier.threshold) || settings.vipSystem.tiers[0];
-        
-        const nextTier = settings.vipSystem.tiers
-            .filter(tier => tier.threshold > currentTier.threshold)
-            .sort((a,b) => a.threshold - b.threshold)[0] || null;
-
-        const progress = nextTier ? Math.min(100, (totalVolume / nextTier.threshold) * 100) : 100;
-        
-        return { currentTier, nextTier, progress, totalVolume };
-    }, [transactions, settings.vipSystem.tiers]);
 
     // --- PROMO CODE MANAGEMENT ---
     const promoCodes = settings.promoCodes || [];
@@ -293,31 +282,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { isValid: true, promo, message: "Kode promo berhasil diterapkan!", discountPercent: promo.discountPercent };
     }, [promoCodes, transactions]);
     
-    // --- AFFILIATE SYSTEM ---
-    const getAffiliateStats = useCallback((gameId: string) => {
-        const data = affiliateData[gameId] || { commissionBalance: 0, commissionPaid: 0, referrals: [], history: [] };
-        return {
-            ...data,
-            referrals: data.referrals.length,
-        };
-    }, [affiliateData]);
-
-    const handlePayout = useCallback((gameId: string) => {
-        setAffiliateData(prev => {
-            const userData = prev[gameId];
-            if (!userData) return prev;
-            return {
-                ...prev,
-                [gameId]: {
-                    ...userData,
-                    commissionPaid: userData.commissionPaid + userData.commissionBalance,
-                    commissionBalance: 0,
-                }
-            };
-        });
-        showToast(`Payout untuk ${gameId} berhasil ditandai sebagai selesai.`, 'success');
-    }, [setAffiliateData, showToast]);
-
 
     const addTransaction = useCallback(async (txData: AddTransactionData): Promise<string> => {
         const id = `RP-${Date.now().toString(36).substr(2, 9)}`.toUpperCase();
@@ -330,29 +294,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updatePromoCode(promo.id, { currentUses: promo.currentUses + 1 });
             finalTxData.promoCodeUsed = promo.id; // Store ID
         }
-
-        // Affiliate logic
-        const referrerId = sessionStorage.getItem('referrerId');
-        const isFirstTransaction = !transactions.some(tx => tx.destinationId === finalTxData.destinationId);
         
-        if (settings.affiliateSystem.enabled && referrerId && isFirstTransaction && referrerId !== finalTxData.destinationId) {
-            finalTxData.referrerId = referrerId;
-            const commissionAmount = finalTxData.moneyValue * (settings.affiliateSystem.commissionRate / 100);
-            
-            setAffiliateData(prev => {
-                const referrerData = prev[referrerId] || { commissionBalance: 0, commissionPaid: 0, referrals: [], history: [] };
-                return {
-                    ...prev,
-                    [referrerId]: {
-                        ...referrerData,
-                        commissionBalance: referrerData.commissionBalance + commissionAmount,
-                        referrals: [...referrerData.referrals, finalTxData.destinationId],
-                        history: [...referrerData.history, { transactionId: id, amount: commissionAmount, timestamp: Date.now() }],
-                    }
-                };
-            });
-        }
-
+        // FIX: Capture referral ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const refId = urlParams.get('ref');
 
         const newTransaction: Transaction = { 
             ...(finalTxData as any),
@@ -361,15 +306,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             anonymizedId: anonymizeId(id), 
             status: TransactionStatus.PENDING, 
             createdAt: Date.now(),
+            referredBy: refId || undefined,
         };
         
         setTransactions(prev => [newTransaction, ...prev]);
         
-        const notifMessage = `*Transaksi Baru Masuk!*\n*ID:* \`${newTransaction.id}\`\n*Tipe:* ${newTransaction.type}\n*Jumlah:* ${new Intl.NumberFormat('id-ID').format(newTransaction.moneyValue)} IDR\n*User ID:* \`${newTransaction.destinationId}\`\n${promoCode ? `*Promo:* \`${promoCode}\`` : ''}\n${newTransaction.referrerId ? `*Referral dari:* \`${newTransaction.referrerId}\`` : ''}\n_Harap segera diproses._`;
+        const notifMessage = `*Transaksi Baru Masuk!*\n*ID:* \`${newTransaction.id}\`\n*Tipe:* ${newTransaction.type}\n*Jumlah:* ${new Intl.NumberFormat('id-ID').format(newTransaction.moneyValue)} IDR\n*User ID:* \`${newTransaction.destinationId}\`\n${promoCode ? `*Promo:* \`${promoCode}\`` : ''}\n_Harap segera diproses._`;
         await sendTelegramNotification(settings, notifMessage);
 
         return newTransaction.id;
-    }, [settings, transactions, setTransactions, updatePromoCode, setAffiliateData]);
+    }, [settings, setTransactions, updatePromoCode]);
 
     const sendChatMessage = useCallback((message: string) => {
         const userMessage: ChatMessage = {
@@ -395,9 +341,80 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }, 1500);
     }, [setChatHistory, setAllChatMessages]);
 
+    // FIX: Implemented getUserVipStatus function
+    const getUserVipStatus = useCallback((gameId: string): VipStatus | null => {
+        if (!settings.vipSystem.enabled) return null;
+        
+        const userTransactions = transactions.filter(tx => tx.destinationId === gameId && tx.status === TransactionStatus.PAID);
+        const totalVolume = userTransactions.reduce((sum, tx) => sum + tx.moneyValue, 0);
+
+        const sortedTiers = [...settings.vipSystem.tiers].sort((a, b) => a.threshold - b.threshold);
+        let currentTier = sortedTiers[0];
+        for (const tier of sortedTiers) {
+            if (totalVolume >= tier.threshold) {
+                currentTier = tier;
+            } else {
+                break;
+            }
+        }
+        
+        const currentTierIndex = sortedTiers.findIndex(t => t.name === currentTier.name);
+        const nextTier = currentTierIndex < sortedTiers.length - 1 ? sortedTiers[currentTierIndex + 1] : null;
+
+        let progress = 100;
+        if (nextTier) {
+            const prevTierThreshold = currentTier.threshold;
+            const nextTierThreshold = nextTier.threshold;
+            const range = nextTierThreshold - prevTierThreshold;
+            const volumeInTier = totalVolume - prevTierThreshold;
+            progress = range > 0 ? Math.min(100, (volumeInTier / range) * 100) : 100;
+        }
+
+        return { totalVolume, currentTier, nextTier, progress };
+    }, [transactions, settings.vipSystem]);
+
+    // FIX: Implemented getAffiliateStats function
+    const getAffiliateStats = useCallback((gameId: string): AffiliateStats | null => {
+        if (!settings.affiliateSystem.enabled) return null;
+
+        const referredUserIds = [...new Set(transactions.filter(tx => tx.referredBy === gameId).map(tx => tx.destinationId))];
+
+        const history: AffiliateCommission[] = [];
+        let commissionBalance = 0;
+
+        referredUserIds.forEach(userId => {
+            const userTransactions = transactions.filter(tx => tx.destinationId === userId && tx.status === TransactionStatus.PAID);
+            
+            if (userTransactions.length > 0) {
+                 const firstTxWithReferrer = userTransactions
+                    .sort((a, b) => a.createdAt - b.createdAt)
+                    .find(tx => tx.referredBy === gameId);
+
+                if (firstTxWithReferrer) {
+                     const isFirstOverallTx = userTransactions[0].id === firstTxWithReferrer.id;
+                     if(isFirstOverallTx) {
+                        const commission = firstTxWithReferrer.moneyValue * (settings.affiliateSystem.commissionRate / 100);
+                        commissionBalance += commission;
+                        history.push({
+                            transactionId: firstTxWithReferrer.id,
+                            amount: commission,
+                            timestamp: firstTxWithReferrer.paidAt || firstTxWithReferrer.createdAt,
+                        });
+                     }
+                }
+            }
+        });
+
+        return {
+            referrals: referredUserIds.length,
+            commissionBalance,
+            commissionPaid: 0,
+            history,
+        };
+    }, [transactions, settings.affiliateSystem]);
 
     return (
-        <DataContext.Provider value={{ transactions, settings, toasts, addTransaction, updateTransactionStatus, updateSettings, updatePin, showToast, removeToast, getUserVipStatus, promoCodes, addPromoCode, updatePromoCode, deletePromoCode, validatePromoCode, chatHistory, allChatMessages, sendChatMessage, affiliateData, getAffiliateStats, handlePayout }}>
+        <DataContext.Provider value={{ transactions, settings, toasts, addTransaction, updateTransactionStatus, updateSettings, updatePin, showToast, removeToast, promoCodes, addPromoCode, updatePromoCode, deletePromoCode, validatePromoCode, chatHistory, allChatMessages, sendChatMessage, getUserVipStatus, getAffiliateStats }}>
             {children}
         </DataContext.Provider>
     );

@@ -1,15 +1,16 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { CHIP_UNIT, INDONESIAN_BANKS, INDONESIAN_EWALLETS, parseChipInput, formatChipAmount } from '../constants';
 import { PhotoIcon, BanknotesIcon, UserCircleIcon, PaperAirplaneIcon, ClipboardDocumentIcon, CheckIcon, CreditCardIcon, WalletIcon, ArrowLeftIcon, ArrowRightIcon, SparklesIcon, TicketIcon, XCircleIcon } from '@heroicons/react/24/solid';
-import { PaymentMethod, PaymentDetails, VipTier, PromoCode } from '../types';
+import { PaymentMethod, PaymentDetails, PromoCode } from '../types';
 
 interface UserFormProps {
     onComplete: (transactionId: string) => void;
 }
 
 const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
-    const { settings, addTransaction, showToast, getUserVipStatus, validatePromoCode } = useData();
+    const { settings, addTransaction, showToast, validatePromoCode } = useData();
     const [step, setStep] = useState(1);
     
     const [chipInput, setChipInput] = useState<string>('');
@@ -28,20 +29,10 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
 
     const parsedChipAmount = useMemo(() => parseChipInput(chipInput), [chipInput]);
     
-    const userVipStatus = useMemo(() => {
-        if (!settings.vipSystem.enabled || !senderId) return null;
-        return getUserVipStatus(senderId);
-    }, [senderId, getUserVipStatus, settings.vipSystem.enabled]);
-
     const moneyValue = useMemo(() => {
         if (!parsedChipAmount) return 0;
         const baseValue = (parsedChipAmount / CHIP_UNIT) * settings.exchangeRate;
         let finalValue = baseValue;
-
-        // Apply VIP Bonus
-        if (userVipStatus && settings.vipSystem.enabled) {
-            finalValue += baseValue * (userVipStatus.currentTier.sellRateBonus / 100);
-        }
 
         // Apply Promo Bonus
         if (appliedPromo) {
@@ -49,7 +40,7 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
         }
         
         return finalValue;
-    }, [parsedChipAmount, settings.exchangeRate, userVipStatus, appliedPromo, settings.vipSystem.enabled]);
+    }, [parsedChipAmount, settings.exchangeRate, appliedPromo]);
     
     const handleApplyPromo = () => {
         if (!promoCodeInput) { showToast("Masukkan kode promo.", "error"); return; }
@@ -125,7 +116,6 @@ const UserForm: React.FC<UserFormProps> = ({ onComplete }) => {
                     <div className="space-y-6 animate-fade-in">
                         <h3 className="text-xl font-semibold text-center text-purple-300">Langkah 1: Detail Penjualan</h3>
                         <div><label className="block text-sm font-medium text-slate-400 mb-2">ID Pengirim (Akun Anda)</label><div className="relative"><UserCircleIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={senderId} onChange={(e) => setSenderId(e.target.value)} placeholder="Masukkan ID Game Anda" className={commonInputClass} /></div>
-                        {userVipStatus && <div className="mt-2 text-xs text-amber-400 font-semibold flex items-center gap-1"><SparklesIcon className="w-4 h-4" />Level VIP: {userVipStatus.currentTier.name} (Bonus {userVipStatus.currentTier.sellRateBonus}%)</div>}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-2">Jumlah Chip Dijual</label>

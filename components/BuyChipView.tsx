@@ -1,15 +1,16 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import { useData } from '../context/DataContext';
 import { CHIP_PACKAGES, formatChipAmount, CHIP_UNIT } from '../constants';
 import { PhotoIcon, UserCircleIcon, PaperAirplaneIcon, ClipboardDocumentIcon, CheckIcon, ArrowLeftIcon, ArrowRightIcon, ShoppingCartIcon, SparklesIcon, ExclamationTriangleIcon, ArrowDownTrayIcon, XMarkIcon, TicketIcon, XCircleIcon } from '@heroicons/react/24/solid';
-import { ChipPackage, VipTier, PromoCode } from '../types';
+import { ChipPackage, PromoCode } from '../types';
 
 interface BuyChipViewProps {
     onComplete: (transactionId: string) => void;
 }
 
 const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete }) => {
-    const { settings, addTransaction, showToast, getUserVipStatus, validatePromoCode } = useData();
+    const { settings, addTransaction, showToast, validatePromoCode } = useData();
     const [step, setStep] = useState(1);
     
     const [selectedPackage, setSelectedPackage] = useState<ChipPackage | null>(null);
@@ -26,28 +27,18 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete }) => {
     const { bankName, accountNumber, accountName, qrisImage, paymentMethods } = settings.adminPaymentInfo;
     const adminPaymentText = `${bankName}: ${accountNumber} (a/n ${accountName})`;
     const noPaymentMethodAvailable = !paymentMethods.bankTransfer && !paymentMethods.qris;
-
-    const userVipStatus = useMemo(() => {
-        if (!settings.vipSystem.enabled || !destinationId) return null;
-        return getUserVipStatus(destinationId);
-    }, [destinationId, getUserVipStatus, settings.vipSystem.enabled]);
     
-    const getAdjustedPrice = useCallback((pkg: ChipPackage, tier: VipTier | null, promo: {promo: PromoCode} | null) => {
+    const getAdjustedPrice = useCallback((pkg: ChipPackage, promo: {promo: PromoCode} | null) => {
         const basePrice = (pkg.chipAmount / CHIP_UNIT) * settings.buyRate;
         let finalPrice = basePrice;
         
-        // Apply VIP Discount
-        if (tier && settings.vipSystem.enabled) {
-            finalPrice -= basePrice * (tier.buyRateBonus / 100);
-        }
-
         // Apply Promo Discount
         if (promo) {
             finalPrice -= basePrice * (promo.promo.discountPercent / 100);
         }
 
         return finalPrice;
-    }, [settings.buyRate, settings.vipSystem.enabled]);
+    }, [settings.buyRate]);
 
     const handleApplyPromo = () => {
         if (!promoCodeInput) { showToast("Masukkan kode promo.", "error"); return; }
@@ -110,7 +101,7 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete }) => {
 
     const handleSubmit = useCallback(async () => {
         if (!proofImage || !selectedPackage || !destinationId) { showToast('Data tidak lengkap.', 'error'); return; }
-        const finalPrice = getAdjustedPrice(selectedPackage, userVipStatus?.currentTier || null, appliedPromo);
+        const finalPrice = getAdjustedPrice(selectedPackage, appliedPromo);
         setIsLoading(true);
         try {
             const transactionId = await addTransaction({ type: 'BUY', data: { chipAmount: selectedPackage.chipAmount, destinationId, proofImage, chipPackage: selectedPackage, moneyValue: finalPrice, promoCodeUsed: appliedPromo?.promo.code }});
@@ -121,7 +112,7 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete }) => {
         } finally {
             setIsLoading(false);
         }
-    }, [proofImage, selectedPackage, destinationId, addTransaction, onComplete, showToast, getAdjustedPrice, userVipStatus, appliedPromo]);
+    }, [proofImage, selectedPackage, destinationId, addTransaction, onComplete, showToast, getAdjustedPrice, appliedPromo]);
 
     const renderStepContent = () => {
         const commonInputClass = "w-full pl-10 pr-4 py-3 bg-black/30 border border-green-500/30 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-white placeholder:text-slate-500";
@@ -133,11 +124,10 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete }) => {
                          <div>
                             <label className="block text-sm font-medium text-slate-400 mb-2">ID Game Tujuan (Akun Anda)</label>
                             <div className="relative"><UserCircleIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" /><input type="text" value={destinationId} onChange={(e) => setDestinationId(e.target.value)} placeholder="Masukkan ID Game Anda" className={commonInputClass} /></div>
-                            {userVipStatus && <div className="mt-2 text-xs text-amber-400 font-semibold flex items-center gap-1"><SparklesIcon className="w-4 h-4" />Level VIP: {userVipStatus.currentTier.name} (Diskon {userVipStatus.currentTier.buyRateBonus}%)</div>}
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {CHIP_PACKAGES.map(pkg => {
-                                const price = getAdjustedPrice(pkg, userVipStatus?.currentTier || null, appliedPromo);
+                                const price = getAdjustedPrice(pkg, appliedPromo);
                                 const basePrice = (pkg.chipAmount / CHIP_UNIT) * settings.buyRate;
                                 const hasDiscount = price < basePrice;
                                 return (
@@ -196,7 +186,7 @@ const BuyChipView: React.FC<BuyChipViewProps> = ({ onComplete }) => {
                     </div>
                 );
             case 3:
-                const finalPrice = selectedPackage ? getAdjustedPrice(selectedPackage, userVipStatus?.currentTier || null, appliedPromo) : 0;
+                const finalPrice = selectedPackage ? getAdjustedPrice(selectedPackage, appliedPromo) : 0;
                 return (
                     <div className="animate-fade-in"><h3 className="text-xl font-semibold text-center text-green-300">Langkah 3: Konfirmasi</h3><div className="mt-6 p-4 space-y-3 bg-black/30 rounded-lg border border-green-500/30 text-sm"><div className="flex justify-between"><span className="text-slate-400">Paket Chip:</span> <span className="font-bold text-white">{selectedPackage?.name}</span></div><div className="flex justify-between"><span className="text-slate-400">Jumlah Chip:</span> <span className="font-bold text-white">{formatChipAmount(selectedPackage?.chipAmount || 0)}</span></div><div className="flex justify-between border-t border-slate-800 pt-3 mt-3"><span className="text-slate-400">ID Tujuan:</span> <span className="font-mono text-white">{destinationId}</span></div>{appliedPromo && <div className="flex justify-between"><span className="text-slate-400">Promo Digunakan:</span> <span className="font-bold text-green-400">{appliedPromo.promo.code} (-{appliedPromo.promo.discountPercent}%)</span></div>}<div className="flex justify-between text-lg border-t border-slate-800 pt-3 mt-3"><span className="text-green-400">Total Bayar:</span> <span className="font-bold text-green-400">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(finalPrice)}</span></div></div><p className="text-xs text-center text-slate-500 mt-4">Pastikan ID tujuan sudah benar. Kesalahan input bukan tanggung jawab kami.</p></div>
                 );

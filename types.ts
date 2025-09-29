@@ -1,3 +1,4 @@
+
 export enum TransactionStatus {
   PENDING = 'Tertunda',
   VERIFYING = 'Verifikasi',
@@ -38,15 +39,8 @@ export interface Transaction {
   paidAt?: number;
   chipPackage?: Omit<ChipPackage, 'price'>; // For BUY transactions
   promoCodeUsed?: string;
-  referrerId?: string; // ID of the affiliate who referred this user
-}
-
-export interface VipTier {
-    name: string;
-    threshold: number; // Total transaction volume to reach this tier
-    buyRateBonus: number; // Percentage discount for buying
-    sellRateBonus: number; // Percentage bonus for selling
-    icon: string;
+  // FIX: Added referredBy field to support affiliate system.
+  referredBy?: string; // ID of the affiliate referrer
 }
 
 export interface PromoCode {
@@ -79,27 +73,45 @@ export interface ChatSettings {
   welcomeMessage: string;
 }
 
-export interface Commission {
-  transactionId: string;
-  amount: number;
-  timestamp: number;
+// FIX: Added types for VIP System
+export interface VipTier {
+  name: string;
+  threshold: number; // The volume needed to reach this tier
+  icon: string;
+  buyRateBonus: number;
+  sellRateBonus: number;
 }
 
-export interface AffiliateData {
-  [gameId: string]: {
+export interface VipSystemSettings {
+  enabled: boolean;
+  tiers: VipTier[];
+}
+
+export interface VipStatus {
+  totalVolume: number;
+  currentTier: VipTier;
+  nextTier: VipTier | null;
+  progress: number; // Percentage to next tier
+}
+
+// FIX: Added types for Affiliate System
+export interface AffiliateSystemSettings {
+    enabled: boolean;
+    commissionRate: number; // Percentage, e.g., 5 for 5%
+}
+
+export interface AffiliateCommission {
+    transactionId: string;
+    amount: number;
+    timestamp: number;
+}
+
+export interface AffiliateStats {
+    referrals: number;
     commissionBalance: number;
     commissionPaid: number;
-    referrals: string[]; // List of referred user game IDs
-    history: Commission[];
-  };
+    history: AffiliateCommission[];
 }
-
-export interface AffiliateSettings {
-  enabled: boolean;
-  commissionRate: number; // Percentage
-  minPayout: number; // Minimum amount for payout
-}
-
 
 export interface AdminSettings {
   adminPin: string;
@@ -128,10 +140,6 @@ export interface AdminSettings {
       globalHistory: boolean;
       providerCarousel: boolean;
   };
-  vipSystem: {
-      enabled: boolean;
-      tiers: VipTier[];
-  };
   notifications: {
       telegram: {
           enabled: boolean;
@@ -142,7 +150,9 @@ export interface AdminSettings {
   promoCodes: PromoCode[];
   partners: Partner[];
   chatSettings: ChatSettings;
-  affiliateSystem: AffiliateSettings;
+  // FIX: Added vipSystem and affiliateSystem to AdminSettings
+  vipSystem: VipSystemSettings;
+  affiliateSystem: AffiliateSystemSettings;
 }
 
 export type ToastType = 'success' | 'error' | 'info';
@@ -163,7 +173,6 @@ export interface DataContextType {
     toasts: ToastMessage[];
     allChatMessages: ChatMessage[];
     chatHistory: ChatMessage[];
-    affiliateData: AffiliateData;
     sendChatMessage: (message: string) => void;
     addTransaction: (txData: AddTransactionData) => Promise<string>;
     updateTransactionStatus: (id: string, status: TransactionStatus) => void;
@@ -171,12 +180,12 @@ export interface DataContextType {
     updatePin: (newPin: string) => boolean;
     showToast: (message: string, type: ToastType) => void;
     removeToast: (id: number) => void;
-    getUserVipStatus: (gameId: string) => { currentTier: VipTier, nextTier: VipTier | null, progress: number, totalVolume: number };
     promoCodes: PromoCode[];
     addPromoCode: (codeData: Omit<PromoCode, 'id' | 'currentUses' | 'createdAt' | 'isActive'>) => void;
     updatePromoCode: (id: string, updates: Partial<PromoCode>) => void;
     deletePromoCode: (id: string) => void;
     validatePromoCode: (code: string, type: TransactionType, gameId: string) => { isValid: boolean; promo?: PromoCode; message: string; discountPercent?: number };
-    getAffiliateStats: (gameId: string) => { commissionBalance: number; commissionPaid: number; referrals: number; history: Commission[] };
-    handlePayout: (gameId: string) => void;
+    // FIX: Added getUserVipStatus and getAffiliateStats to DataContextType
+    getUserVipStatus: (gameId: string) => VipStatus | null;
+    getAffiliateStats: (gameId: string) => AffiliateStats | null;
 }

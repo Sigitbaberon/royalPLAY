@@ -1,10 +1,11 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '../context/DataContext';
-import { AdminSettings, Transaction, TransactionStatus, TransactionType, VipTier, PromoCode, Partner, AffiliateData } from '../types';
+import { AdminSettings, Transaction, TransactionStatus, TransactionType, PromoCode, Partner } from '../types';
 import { formatChipAmount, DEFAULT_ADMIN_PIN } from '../constants';
 import { Cog6ToothIcon, ArrowPathIcon, CheckCircleIcon, XCircleIcon, ClockIcon, BanknotesIcon, ShoppingCartIcon, WalletIcon, BuildingLibraryIcon, ChartBarIcon, PowerIcon, CurrencyDollarIcon, CalendarDaysIcon, ShieldCheckIcon, StarIcon, BellIcon, PaintBrushIcon, KeyIcon, ArrowDownOnSquareIcon, TrashIcon, TicketIcon, PencilIcon, UserGroupIcon, ChatBubbleLeftRightIcon, PaperClipIcon, ShareIcon, TrophyIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/solid';
 
-type AdminTab = 'dashboard' | 'transactions' | 'affiliates' | 'chat' | 'settings';
+type AdminTab = 'dashboard' | 'transactions' | 'chat' | 'settings';
 
 const Accordion: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }> = ({ title, icon, children, defaultOpen = false }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -49,12 +50,6 @@ const SettingsPanel: React.FC<{
         });
     };
     
-    const handleVipTierChange = (index: number, field: keyof VipTier, value: any) => {
-        const updatedTiers = [...localSettings.vipSystem.tiers];
-        updatedTiers[index] = { ...updatedTiers[index], [field]: value };
-        handleGenericChange('vipSystem.tiers', updatedTiers);
-    };
-
     const handleQrisUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -168,19 +163,6 @@ const SettingsPanel: React.FC<{
                         {localSettings.adminPaymentInfo.paymentMethods.qris && <div className="pl-8 flex items-center gap-4 animate-fade-in"><input type="file" id="qris-upload" className="hidden" accept="image/*" onChange={handleQrisUpload}/><label htmlFor="qris-upload" className="btn-secondary">Unggah File QRIS</label> {localSettings.adminPaymentInfo.qrisImage && <div className="relative group"><img src={localSettings.adminPaymentInfo.qrisImage} alt="QRIS Preview" className="rounded-lg h-24 w-24 object-cover border border-slate-700"/><button onClick={() => handleGenericChange('adminPaymentInfo.qrisImage', null)} className="absolute -top-2 -right-2 btn-danger-sm"><XCircleIcon className="w-5 h-5"/></button></div>}</div>}
                     </div>
                  </div>
-            </Accordion>
-            
-             <Accordion title="Sistem VIP" icon={<StarIcon className="w-5 h-5"/>}>
-                <div className="flex items-center gap-3 mb-6"><input type="checkbox" checked={localSettings.vipSystem.enabled} onChange={e => handleGenericChange('vipSystem.enabled', e.target.checked)} className="h-5 w-5 rounded" /><label className="text-sm font-semibold text-slate-200">Aktifkan Sistem VIP</label></div>
-                {localSettings.vipSystem.enabled && <div className="space-y-4 animate-fade-in"> {localSettings.vipSystem.tiers.map((tier, index) => ( <div key={index} className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center p-3 bg-black/20 rounded-lg"> <span className="font-semibold">{tier.name}</span> <div><label className="block text-xs text-slate-400">Threshold (Rp)</label><input type="number" value={tier.threshold} onChange={e => handleVipTierChange(index, 'threshold', parseFloat(e.target.value))} className="input-field-sm" /></div> <div><label className="block text-xs text-slate-400">Diskon Beli (%)</label><input type="number" step="0.1" value={tier.buyRateBonus} onChange={e => handleVipTierChange(index, 'buyRateBonus', parseFloat(e.target.value))} className="input-field-sm" /></div><div><label className="block text-xs text-slate-400">Bonus Jual (%)</label><input type="number" step="0.1" value={tier.sellRateBonus} onChange={e => handleVipTierChange(index, 'sellRateBonus', parseFloat(e.target.value))} className="input-field-sm" /></div></div>))}</div>}
-            </Accordion>
-            
-            <Accordion title="Program Afiliasi" icon={<ShareIcon className="w-5 h-5"/>}>
-                <div className="flex items-center gap-3 mb-6"><input type="checkbox" checked={localSettings.affiliateSystem.enabled} onChange={e => handleGenericChange('affiliateSystem.enabled', e.target.checked)} className="h-5 w-5 rounded" /><label className="text-sm font-semibold text-slate-200">Aktifkan Program Afiliasi</label></div>
-                {localSettings.affiliateSystem.enabled && <div className="space-y-4 animate-fade-in pl-8">
-                    <div><label className="block text-sm text-slate-400 mb-1">Rate Komisi (%)</label><input type="number" step="0.1" value={localSettings.affiliateSystem.commissionRate} onChange={e => handleGenericChange('affiliateSystem.commissionRate', parseFloat(e.target.value))} className="input-field" /></div>
-                    <div><label className="block text-sm text-slate-400 mb-1">Minimum Payout (Rp)</label><input type="number" value={localSettings.affiliateSystem.minPayout} onChange={e => handleGenericChange('affiliateSystem.minPayout', parseInt(e.target.value))} className="input-field" /></div>
-                </div>}
             </Accordion>
             
             <Accordion title="Notifikasi" icon={<BellIcon className="w-5 h-5"/>}>
@@ -351,72 +333,6 @@ const ChatPanel: React.FC = () => {
         </div>
     );
 };
-
-const AffiliatePanel: React.FC = () => {
-    const { settings, affiliateData, handlePayout } = useData();
-    const { minPayout } = settings.affiliateSystem;
-
-    const affiliateSummary = useMemo(() => {
-        const data = Object.entries(affiliateData);
-        const totalPaid = data.reduce((sum, [, val]) => sum + val.commissionPaid, 0);
-        const totalUnpaid = data.reduce((sum, [, val]) => sum + val.commissionBalance, 0);
-        const topAffiliates = data
-            .map(([id, val]) => ({ id, total: val.commissionBalance + val.commissionPaid }))
-            .sort((a, b) => b.total - a.total)
-            .slice(0, 5);
-        const pendingPayouts = data
-            .filter(([, val]) => val.commissionBalance >= minPayout)
-            .sort((a, b) => b[1].commissionBalance - a[1].commissionBalance);
-
-        return { totalPaid, totalUnpaid, activeAffiliates: data.length, topAffiliates, pendingPayouts };
-    }, [affiliateData, minPayout]);
-
-    return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <SummaryCard icon={<CurrencyDollarIcon className="w-7 h-7"/>} title="Total Komisi Dibayar" value={affiliateSummary.totalPaid} isCurrency color="text-green-400" />
-                <SummaryCard icon={<WalletIcon className="w-7 h-7"/>} title="Komisi Belum Dibayar" value={affiliateSummary.totalUnpaid} isCurrency color="text-amber-400" />
-                <SummaryCard icon={<UserGroupIcon className="w-7 h-7"/>} title="Total Afiliator Aktif" value={affiliateSummary.activeAffiliates} color="text-blue-400" />
-            </div>
-            
-            <div className="lg:col-span-2 glass-pane p-6 rounded-2xl">
-                 <h3 className="text-lg font-bold text-purple-300 mb-4">Payout Tertunda (Diatas Minimum)</h3>
-                 <div className="space-y-3">
-                    {affiliateSummary.pendingPayouts.map(([id, data]) => (
-                        <div key={id} className="flex justify-between items-center text-sm bg-black/20 p-3 rounded-md">
-                            <div>
-                                <p className="font-mono text-slate-300">{id}</p>
-                                <p className="text-xs text-slate-500">Total Referral: {data.referrals.length}</p>
-                            </div>
-                            <div className="flex items-center gap-4">
-                               <span className="font-bold text-green-400">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(data.commissionBalance)}</span>
-                               <button onClick={() => handlePayout(id)} className="flex items-center gap-2 px-3 py-1.5 bg-green-600/80 hover:bg-green-600 rounded-lg font-semibold text-xs transition"><ClipboardDocumentCheckIcon className="w-4 h-4"/> Tandai Dibayar</button>
-                            </div>
-                        </div>
-                    ))}
-                    {affiliateSummary.pendingPayouts.length === 0 && <p className="text-slate-500 text-center py-4">Tidak ada payout yang tertunda.</p>}
-                 </div>
-            </div>
-
-            <div className="glass-pane p-6 rounded-2xl">
-                <h3 className="text-lg font-bold text-purple-300 mb-4 flex items-center gap-2"><TrophyIcon className="w-5 h-5"/> Top Afiliator</h3>
-                <div className="space-y-3">
-                    {affiliateSummary.topAffiliates.map(({id, total}, i) => (
-                        <div key={id} className="flex justify-between items-center text-sm bg-black/20 p-2 rounded-md">
-                            <div className="flex items-center gap-3">
-                                <span className="font-bold text-slate-500 w-6 text-center">{i+1}</span>
-                                <span className="font-mono text-slate-300">{id}</span>
-                            </div>
-                            <span className="font-bold text-green-400">{new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(total)}</span>
-                        </div>
-                    ))}
-                    {affiliateSummary.topAffiliates.length === 0 && <p className="text-slate-500 text-center py-4">Belum ada data.</p>}
-                </div>
-            </div>
-        </div>
-    )
-};
-
 
 const AnimatedNumber: React.FC<{ value: number; isCurrency?: boolean }> = ({ value, isCurrency = false }) => {
     const [displayValue, setDisplayValue] = useState(0);
@@ -655,8 +571,6 @@ const AdminPanel: React.FC = () => {
                 );
             case 'transactions':
                 return <TransactionPanel />;
-            case 'affiliates':
-                return <AffiliatePanel />;
             case 'chat':
                 return <ChatPanel />;
             case 'settings':
@@ -687,7 +601,6 @@ const AdminPanel: React.FC = () => {
             <div className="glass-pane p-2 rounded-xl flex flex-wrap gap-2">
                 <NavButton tab="dashboard" icon={<ChartBarIcon className="w-5 h-5"/>} label="Dashboard" />
                 <NavButton tab="transactions" icon={<BuildingLibraryIcon className="w-5 h-5"/>} label="Transaksi" />
-                <NavButton tab="affiliates" icon={<ShareIcon className="w-5 h-5"/>} label="Afiliasi" />
                 <NavButton tab="chat" icon={<ChatBubbleLeftRightIcon className="w-5 h-5"/>} label="Live Chat" />
                 <NavButton tab="settings" icon={<Cog6ToothIcon className="w-5 h-5"/>} label="Super Settings" />
             </div>
